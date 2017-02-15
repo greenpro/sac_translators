@@ -1,16 +1,28 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(andreas_arm_translators)
+project(sac_translators)
+
+add_compile_options(-std=c++11)
+
+find_package(Eigen3 REQUIRED)
+
+if (NOT EIGEN3_INCLUDE_DIRS)
+    set(EIGEN3_INCLUDE_DIRS $(EIGEN3_INCLUDE_DIR}))
+endif()
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  moveit_core
+  moveit_ros_planning
+  moveit_ros_planning_interface
+  pluginlib
   roscpp
   rospy
 )
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED system filesystem date_time thread)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -99,10 +111,12 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES andreas_arm_translators
-#  CATKIN_DEPENDS roscpp rospy
-#  DEPENDS system_lib
+  CATKIN_DEPENDS
+    moveit_core
+    moveit_ros_planning_interface
+    interactive_markers
+  DEPENDS
+    EIGEN3
 )
 
 ###########
@@ -113,28 +127,34 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
+    SYSTEM ${Boost_INCLUDE_DIR} ${EIGEN3_INCLUDE_DIRS}
+)
+include_directories(
   ${catkin_INCLUDE_DIRS}
+)
+link_directories(
+    ${catkin_LIBRARY_DIRS}
 )
 
 ## Declare a C++ library
-# add_library(andreas_arm_translators
-#   src/${PROJECT_NAME}/andreas_arm_translators.cpp
+# add_library(sac_translators
+#   src/${PROJECT_NAME}/sac_translators.cpp
 # )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(andreas_arm_translators ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(sac_translators ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-# add_executable(andreas_arm_translators_node src/andreas_arm_translators_node.cpp)
+# add_executable(sac_translators_node src/sac_translators_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(andreas_arm_translators_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(sac_translators_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(andreas_arm_translators_node
+# target_link_libraries(sac_translators_node
 #   ${catkin_LIBRARIES}
 # )
 
@@ -153,7 +173,7 @@ include_directories(
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS andreas_arm_translators andreas_arm_translators_node
+# install(TARGETS sac_translators sac_translators_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -178,10 +198,13 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_andreas_arm_translators.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_sac_translators.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+add_executable(scorbot_moveit src/scorbot_moveit.cpp)
+target_link_libraries(scorbot_moveit ${catkin_LIBRARIES} ${Boost_LIBRARIES})
