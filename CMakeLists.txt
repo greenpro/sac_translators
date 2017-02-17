@@ -208,3 +208,6 @@ link_directories(
 
 add_executable(scorbot_moveit src/scorbot_moveit.cpp)
 target_link_libraries(scorbot_moveit ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
+add_executable(andreas_arm_moveit src/andreas_arm_moveit.cpp)
+target_link_libraries(andreas_arm_moveit ${catkin_LIBRARIES} ${Boost_LIBRARIES})

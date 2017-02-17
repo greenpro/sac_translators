@@ -1,0 +1,6 @@
+<launch>
+    <!-- Start the scorbot_moveit node -->
+    <node name="scorbot_moveit" pkg="sac_translators" type="scorbot_moveit" 
+        respawn="false" output="screen">
+    </node>
+</launch>
