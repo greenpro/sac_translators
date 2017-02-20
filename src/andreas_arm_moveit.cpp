@@ -8,7 +8,7 @@
 #include <moveit_msgs/AttachedCollisionObject.h>
 #include <moveit_msgs/CollisionObject.h>
 
-#include <moveit_visual_tools/moveit_visual_tools.h>
+//#include <moveit_visual_tools/moveit_visual_tools.h>
 
 #define NODE_NAME "andreas_arm_moveit"
 #define PLANNING_GROUP "arm"
