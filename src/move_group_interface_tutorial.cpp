@@ -43,17 +43,11 @@
 #include <moveit_msgs/AttachedCollisionObject.h>
 #include <moveit_msgs/CollisionObject.h>
 
-//#include <moveit_visual_tools/moveit_visual_tools.h>
-<<<<<<< HEAD
-
-#define NODE_NAME "scorbot_moveit"
-#define PLANNING_GROUP "arm"
-=======
->>>>>>> 45996c8ebf9304654b8d48dc4ab229d05cd5052e
+#include <moveit_visual_tools/moveit_visual_tools.h>
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "scorbot_moveit");
+  ros::init(argc, argv, "move_group_interface_tutorial");
   ros::NodeHandle node_handle;
   ros::AsyncSpinner spinner(1);
   spinner.start();
@@ -66,13 +60,11 @@ int main(int argc, char **argv)
   // MoveIt! operates on sets of joints called "planning groups" and stores them in an object called
   // the `JointModelGroup`. Throughout MoveIt! the terms "planning group" and "joint model group"
   // are used interchangably.
-  static const std::string PLANNING_GROUP = "arm";
+  static const std::string PLANNING_GROUP = "right_arm";
 
   // The :move_group_interface:`MoveGroup` class can be easily
   // setup using just the name of the planning group you would like to control and plan for.
-  ROS_INFO("loading arm");
   moveit::planning_interface::MoveGroupInterface move_group(PLANNING_GROUP);
-  ROS_INFO("loaded arm");
 
   // We will use the :planning_scene_interface:`PlanningSceneInterface`
   // class to add and remove collision objects in our "virtual world" scene
@@ -87,21 +79,21 @@ int main(int argc, char **argv)
   //
   // The package MoveItVisualTools provides many capabilties for visualizing objects, robots,
   // and trajectories in Rviz as well as debugging tools such as step-by-step introspection of a script
-  //namespace rvt = rviz_visual_tools;
-  //moveit_visual_tools::MoveItVisualTools visual_tools("odom_combined");
-  //visual_tools.deleteAllMarkers();
+  namespace rvt = rviz_visual_tools;
+  moveit_visual_tools::MoveItVisualTools visual_tools("odom_combined");
+  visual_tools.deleteAllMarkers();
 
   // Remote control is an introspection tool that allows users to step through a high level script
   // via buttons and keyboard shortcuts in Rviz
-  //visual_tools.loadRemoteControl();
+  visual_tools.loadRemoteControl();
 
   // Rviz provides many types of markers, in this demo we will use text, cylinders, and spheres
   Eigen::Affine3d text_pose = Eigen::Affine3d::Identity();
   text_pose.translation().z() = 1.75; // above head of PR2
-  //visual_tools.publishText(text_pose, "MoveGroupInterface Demo", rvt::WHITE, rvt::XLARGE);
+  visual_tools.publishText(text_pose, "MoveGroupInterface Demo", rvt::WHITE, rvt::XLARGE);
 
   // Batch publishing is used to reduce the number of messages being sent to Rviz for large visualizations
-  //visual_tools.trigger();
+  visual_tools.trigger();
 
   // Getting Basic Information
   // ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -133,14 +125,14 @@ int main(int argc, char **argv)
   ROS_INFO_NAMED("tutorial", "Visualizing plan 1 (pose goal) %s", success ? "" : "FAILED");
 
   // Visualizing plans
-  // ^^^^^^^^^^^^^^^^
+  // ^^^^^^^^^^^^^^^^^
   // We can also visualize the plan as a line with markers in Rviz.
   ROS_INFO_NAMED("tutorial", "Visualizing plan 1 as trajectory line");
-  //visual_tools.publishAxisLabeled(target_pose1, "pose1");
-  //visual_tools.publishText(text_pose, "Pose Goal", rvt::WHITE, rvt::XLARGE);
-  //visual_tools.publishTrajectoryLine(my_plan.trajectory_, joint_model_group);
-  //visual_tools.trigger();
-  //visual_tools.prompt("next step");
+  visual_tools.publishAxisLabeled(target_pose1, "pose1");
+  visual_tools.publishText(text_pose, "Pose Goal", rvt::WHITE, rvt::XLARGE);
+  visual_tools.publishTrajectoryLine(my_plan.trajectory_, joint_model_group);
+  visual_tools.trigger();
+  visual_tools.prompt("next step");
 
   // Moving to a pose goal
   // ^^^^^^^^^^^^^^^^^^^^^
@@ -178,11 +170,11 @@ int main(int argc, char **argv)
   ROS_INFO_NAMED("tutorial", "Visualizing plan 2 (joint space goal) %s", success ? "" : "FAILED");
 
   // Visualize the plan in Rviz
-  //visual_tools.deleteAllMarkers();
-  //visual_tools.publishText(text_pose, "Joint Space Goal", rvt::WHITE, rvt::XLARGE);
-  //visual_tools.publishTrajectoryLine(my_plan.trajectory_, joint_model_group);
-  //visual_tools.trigger();
-  //visual_tools.prompt("next step");
+  visual_tools.deleteAllMarkers();
+  visual_tools.publishText(text_pose, "Joint Space Goal", rvt::WHITE, rvt::XLARGE);
+  visual_tools.publishTrajectoryLine(my_plan.trajectory_, joint_model_group);
+  visual_tools.trigger();
+  visual_tools.prompt("next step");
 
   // Planning with Path Constraints
   // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -229,13 +221,13 @@ int main(int argc, char **argv)
   ROS_INFO_NAMED("tutorial", "Visualizing plan 3 (constraints) %s", success ? "" : "FAILED");
 
   // Visualize the plan in Rviz
-  //visual_tools.deleteAllMarkers();
-  //visual_tools.publishAxisLabeled(start_pose2, "start");
-  //visual_tools.publishAxisLabeled(target_pose1, "goal");
-  //visual_tools.publishText(text_pose, "Constrained Goal", rvt::WHITE, rvt::XLARGE);
-  //visual_tools.publishTrajectoryLine(my_plan.trajectory_, joint_model_group);
-  //visual_tools.trigger();
-  //visual_tools.prompt("next step");
+  visual_tools.deleteAllMarkers();
+  visual_tools.publishAxisLabeled(start_pose2, "start");
+  visual_tools.publishAxisLabeled(target_pose1, "goal");
+  visual_tools.publishText(text_pose, "Constrained Goal", rvt::WHITE, rvt::XLARGE);
+  visual_tools.publishTrajectoryLine(my_plan.trajectory_, joint_model_group);
+  visual_tools.trigger();
+  visual_tools.prompt("next step");
 
   // When done with the path constraint be sure to clear it.
   move_group.clearPathConstraints();
@@ -279,23 +271,23 @@ int main(int argc, char **argv)
   ROS_INFO_NAMED("tutorial", "Visualizing plan 4 (cartesian path) (%.2f%% acheived)", fraction * 100.0);
 
   // Visualize the plan in Rviz
-  //visual_tools.deleteAllMarkers();
-  //visual_tools.publishText(text_pose, "Joint Space Goal", rvt::WHITE, rvt::XLARGE);
-  //visual_tools.publishPath(waypoints, rvt::LIME_GREEN, rvt::SMALL);
+  visual_tools.deleteAllMarkers();
+  visual_tools.publishText(text_pose, "Joint Space Goal", rvt::WHITE, rvt::XLARGE);
+  visual_tools.publishPath(waypoints, rvt::LIME_GREEN, rvt::SMALL);
   for (std::size_t i = 0; i < waypoints.size(); ++i)
-    //visual_tools.publishAxisLabeled(waypoints[i], "pt" + std::to_string(i), rvt::SMALL);
-  //visual_tools.trigger();
-  //visual_tools.prompt("next step");
+    visual_tools.publishAxisLabeled(waypoints[i], "pt" + std::to_string(i), rvt::SMALL);
+  visual_tools.trigger();
+  visual_tools.prompt("next step");
 
   // Adding/Removing Objects and Attaching/Detaching Objects
   // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   //
   // Define a collision object ROS message.
   moveit_msgs::CollisionObject collision_object;
-  //collision_object.header.frame_id = move_group.getPlanningFrame();
+  collision_object.header.frame_id = move_group.getPlanningFrame();
 
   // The id of the object is used to identify it.
-  //collision_object.id = "box1";
+  collision_object.id = "box1";
 
   // Define a box to add to the world.
   shape_msgs::SolidPrimitive primitive;
@@ -312,20 +304,20 @@ int main(int argc, char **argv)
   box_pose.position.y = -0.4;
   box_pose.position.z = 1.2;
 
-  //collision_object.primitives.push_back(primitive);
-  //collision_object.primitive_poses.push_back(box_pose);
-  //collision_object.operation = collision_object.ADD;
+  collision_object.primitives.push_back(primitive);
+  collision_object.primitive_poses.push_back(box_pose);
+  collision_object.operation = collision_object.ADD;
 
   std::vector<moveit_msgs::CollisionObject> collision_objects;
-  //collision_objects.push_back(collision_object);
+  collision_objects.push_back(collision_object);
 
   // Now, let's add the collision object into the world
   ROS_INFO_NAMED("tutorial", "Add an object into the world");
-  //planning_scene_interface.addCollisionObjects(collision_objects);
+  planning_scene_interface.addCollisionObjects(collision_objects);
 
   // Show text in Rviz of status
-  //visual_tools.publishText(text_pose, "Add object", rvt::WHITE, rvt::XLARGE);
-  //visual_tools.trigger();
+  visual_tools.publishText(text_pose, "Add object", rvt::WHITE, rvt::XLARGE);
+  visual_tools.trigger();
 
   // Sleep to allow MoveGroup to recieve and process the collision object message
   ros::Duration(1.0).sleep();
@@ -338,30 +330,30 @@ int main(int argc, char **argv)
   ROS_INFO_NAMED("tutorial", "Visualizing plan 5 (pose goal move around cuboid) %s", success ? "" : "FAILED");
 
   // Visualize the plan in Rviz
-  //visual_tools.deleteAllMarkers();
-  //visual_tools.publishText(text_pose, "Obstacle Goal", rvt::WHITE, rvt::XLARGE);
-  //visual_tools.publishTrajectoryLine(my_plan.trajectory_, joint_model_group);
-  //visual_tools.trigger();
-  //visual_tools.prompt("next step");
+  visual_tools.deleteAllMarkers();
+  visual_tools.publishText(text_pose, "Obstacle Goal", rvt::WHITE, rvt::XLARGE);
+  visual_tools.publishTrajectoryLine(my_plan.trajectory_, joint_model_group);
+  visual_tools.trigger();
+  visual_tools.prompt("next step");
 
   // Now, let's attach the collision object to the robot.
   ROS_INFO_NAMED("tutorial", "Attach the object to the robot");
-  //move_group.attachObject(collision_object.id);
+  move_group.attachObject(collision_object.id);
 
   // Show text in Rviz of status
-  //visual_tools.publishText(text_pose, "Object attached to robot", rvt::WHITE, rvt::XLARGE);
-  //visual_tools.trigger();
+  visual_tools.publishText(text_pose, "Object attached to robot", rvt::WHITE, rvt::XLARGE);
+  visual_tools.trigger();
 
   /* Sleep to allow MoveGroup to recieve and process the attached collision object message */
   ros::Duration(1.0).sleep();
 
   // Now, let's detach the collision object from the robot.
   ROS_INFO_NAMED("tutorial", "Detach the object from the robot");
-  //move_group.detachObject(collision_object.id);
+  move_group.detachObject(collision_object.id);
 
   // Show text in Rviz of status
-  //visual_tools.publishText(text_pose, "Object dettached from robot", rvt::WHITE, rvt::XLARGE);
-  //visual_tools.trigger();
+  visual_tools.publishText(text_pose, "Object dettached from robot", rvt::WHITE, rvt::XLARGE);
+  visual_tools.trigger();
 
   /* Sleep to allow MoveGroup to recieve and process the detach collision object message */
   ros::Duration(1.0).sleep();
@@ -369,12 +361,12 @@ int main(int argc, char **argv)
   // Now, let's remove the collision object from the world.
   ROS_INFO_NAMED("tutorial", "Remove the object from the world");
   std::vector<std::string> object_ids;
-  //object_ids.push_back(collision_object.id);
-  //planning_scene_interface.removeCollisionObjects(object_ids);
+  object_ids.push_back(collision_object.id);
+  planning_scene_interface.removeCollisionObjects(object_ids);
 
   // Show text in Rviz of status
-  //visual_tools.publishText(text_pose, "Object removed", rvt::WHITE, rvt::XLARGE);
-  //visual_tools.trigger();
+  visual_tools.publishText(text_pose, "Object removed", rvt::WHITE, rvt::XLARGE);
+  visual_tools.trigger();
 
   /* Sleep to give Rviz time to show the object is no longer there.*/
   ros::Duration(1.0).sleep();
@@ -404,13 +396,13 @@ int main(int argc, char **argv)
   ROS_INFO_NAMED("tutorial", "Visualizing plan 7 (dual arm plan) %s", success ? "" : "FAILED");
 
   // Visualize the plan in Rviz
-  //visual_tools.deleteAllMarkers();
-  //visual_tools.publishAxisLabeled(target_pose1, "goal1");
-  //visual_tools.publishAxisLabeled(target_pose4, "goal2");
-  //visual_tools.publishText(text_pose, "Two Arm Goal", rvt::WHITE, rvt::XLARGE);
+  visual_tools.deleteAllMarkers();
+  visual_tools.publishAxisLabeled(target_pose1, "goal1");
+  visual_tools.publishAxisLabeled(target_pose4, "goal2");
+  visual_tools.publishText(text_pose, "Two Arm Goal", rvt::WHITE, rvt::XLARGE);
   joint_model_group = move_group.getCurrentState()->getJointModelGroup(PLANNING_GROUP2);
-  //visual_tools.publishTrajectoryLine(two_arms_plan.trajectory_, joint_model_group);
-  //visual_tools.trigger();
+  visual_tools.publishTrajectoryLine(two_arms_plan.trajectory_, joint_model_group);
+  visual_tools.trigger();
 
   // END_TUTORIAL
 
