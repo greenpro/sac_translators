@@ -212,3 +212,6 @@ target_link_libraries(scorbot_moveit ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(andreas_arm_moveit src/andreas_arm_moveit.cpp)
 target_link_libraries(andreas_arm_moveit ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
+add_executable(scorbot_ik src/scorbot_ik.cpp)
+target_link_libraries(scorbot_ik ${catkin_LIBRARIES})
