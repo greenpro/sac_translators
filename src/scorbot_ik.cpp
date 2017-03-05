@@ -21,12 +21,13 @@
 
 // Dimentions
 #define D1 (334.25)
-#define D2 (137.35)
+#define D2 (137.35)// remove
+#define D5 (137.35)
 
 #define A1 (101.25)
 #define A2 (220)
 #define A3 (220)
-#define A4 (0)
+#define A4 (0)// remove
 
 ros::Publisher       basePub;
 ros::Publisher   shoulderPub;
@@ -139,6 +140,40 @@ void matMult(float mat0[4][4], float mat1[4][4], float out[4][4])
     }
 }
 
+void ik(float ax, float ay, float az, float px, float py, float pz, float pitch, float roll)
+{
+    float theta1   = atan2(py, px);
+
+    float c1 = cos(theta1);
+    float s1 = sin(theta1);
+    float theta234 = 0 - atan2(c1 * ax + s1 * ay, az);
+    
+    float s234 = sin(theta234);
+
+    float c234 = cos(theta234);
+
+    float c3_top = pow(c1 * px + s1 * py - s234 * D5, 2) + pow(pz + c234 * D5, 2) - pow(A2, 2) - pow(A3, 2);
+    float c3_bot = 2 * A2 * A3;
+    float c3 = c3_top / c3_bot;
+
+    float s3 = sqrt(1 + pow(c3, 2));
+
+    float theta3   = atan2(s3, c3);
+
+    float c2_top = (c1 * px + s1 * py - s234 * D5) * (A3 * c3 + A2) + (pz + c234 * D5) * s3 * A3;
+    float c2_bot = pow(A3 * c3 + A2, 2) + pow(s3, 2) * pow(A3, 2);
+    float c2 = c2_top / c2_bot;
+    
+    float s2_top = (c1 * px + s1 * py - s234 * D5) * (A3 * s3) + (pz + c234 * D5) * (A3 * c3 + A2);
+    float s2_bot = pow(A3 * c3 + A2, 2) + pow(s3, 2) * pow(A3, 2);
+    float s2 = s2_top / s2_bot;
+
+    float theta2   = atan2(s2, c2);
+
+    float theta4   = pitch;
+    float theta5   = roll;
+}
+
 void callback(const geometry_msgs::Twist::ConstPtr& msg)
 {
     ROS_INFO_NAMED(NODE_NAME, "Hit");
@@ -190,33 +225,65 @@ void callback(const geometry_msgs::Twist::ConstPtr& msg)
     float py = out3[1][4];
     float pz = out3[2][4];
 
-    // equations
-    float sqrt_pos = sqrt(pow(px, 2) + pow(py, 2) - pow(D2, 2));
-    float sqrt_neg = 0 - sqrt_neg;
-    float theta1_pos = atan2(py, px) - atan2(D2, sqrt_pos);
-    float theta1_neg = atan2(py, px) - atan2(D2, sqrt_neg);
-    // to change between pos and neg
-    float theta1 = theta1_pos;
+    // IK
+    float theta1   = atan2(py, px);
 
-    float pz_prime = pz + A4;
-    float top = pow(cos(theta1) * px + sin(theta1) * py - A1, 2) + pow(D1 - pz_prime + A4, 2) - pow(A2, 2) - pow(A3, 2);
-    float bot = 2 * A2 * A3;
-    float theta3_pos = acos( top / bot );
-    float theta3_neg = 0 - theta3_pos;
-    // to change between pos and neg
-    float theta3 = theta3_pos;
+    float c1 = cos(theta1);
+    float s1 = sin(theta1);
+    float theta234 = 0 - atan2(c1 * ax + s1 * ay, az);
+    
+    float s234 = sin(theta234);
 
-    sqrt_pos = sqrt( pow(D1 - pz_prime + A4, 2) + pow(cos(theta1) * px + sin(theta1) * py - A1, 2) - pow(A3 * cos(theta3) + A2, 2) );
-    sqrt_neg = 0 - sqrt_neg;
-    float top_pos = (D1 - pz_prime + A4) + sqrt_pos;
-    float top_neg = (D1 - pz_prime + A4) + sqrt_neg;
-    bot = (cos(theta1) * px + sin(theta1) * py - A1) + (A3 * cos(theta3) + A2);
-    float theta2_pos = (top_pos / bot);
-    float theta2_neg = (top_neg / bot);
-    // to change between pos and neg
-    float theta2 = theta2_pos;
+    float c234 = cos(theta234);
 
-    float theta4 = (PI / 2) - theta2 - theta3;
+    float c3_top = pow(c1 * px + s1 * py - s234 * D5, 2) + pow(pz + c234 * D5, 2) - pow(A2, 2) - pow(A3, 2);
+    float c3_bot = 2 * A2 * A3;
+    float c3 = c3_top / c3_bot;
+
+    float s3 = sqrt(1 + pow(c3, 2));
+
+    float theta3   = atan2(s3, c3);
+
+    float c2_top = (c1 * px + s1 * py - s234 * D5) * (A3 * c3 + A2) + (pz + c234 * D5) * s3 * A3;
+    float c2_bot = pow(A3 * c3 + A2, 2) + pow(s3, 2) * pow(A3, 2);
+    float c2 = c2_top / c2_bot;
+    
+    float s2_top = (c1 * px + s1 * py - s234 * D5) * (A3 * s3) + (pz + c234 * D5) * (A3 * c3 + A2);
+    float s2_bot = pow(A3 * c3 + A2, 2) + pow(s3, 2) * pow(A3, 2);
+    float s2 = s2_top / s2_bot;
+
+    float theta2   = atan2(s2, c2);
+
+    float theta4   = pitch;
+    float theta5   = roll;
+
+    //// equations
+    //float sqrt_pos = sqrt(pow(px, 2) + pow(py, 2) - pow(D2, 2));
+    //float sqrt_neg = 0 - sqrt_neg;
+    //float theta1_pos = atan2(py, px) - atan2(D2, sqrt_pos);
+    //float theta1_neg = atan2(py, px) - atan2(D2, sqrt_neg);
+    //// to change between pos and neg
+    //float theta1 = theta1_pos;
+
+    //float pz_prime = pz + A4;
+    //float top = pow(cos(theta1) * px + sin(theta1) * py - A1, 2) + pow(D1 - pz_prime + A4, 2) - pow(A2, 2) - pow(A3, 2);
+    //float bot = 2 * A2 * A3;
+    //float theta3_pos = acos( top / bot );
+    //float theta3_neg = 0 - theta3_pos;
+    //// to change between pos and neg
+    //float theta3 = theta3_pos;
+
+    //sqrt_pos = sqrt( pow(D1 - pz_prime + A4, 2) + pow(cos(theta1) * px + sin(theta1) * py - A1, 2) - pow(A3 * cos(theta3) + A2, 2) );
+    //sqrt_neg = 0 - sqrt_neg;
+    //float top_pos = (D1 - pz_prime + A4) + sqrt_pos;
+    //float top_neg = (D1 - pz_prime + A4) + sqrt_neg;
+    //bot = (cos(theta1) * px + sin(theta1) * py - A1) + (A3 * cos(theta3) + A2);
+    //float theta2_pos = (top_pos / bot);
+    //float theta2_neg = (top_neg / bot);
+    //// to change between pos and neg
+    //float theta2 = theta2_pos;
+
+    //float theta4 = (PI / 2) - theta2 - theta3;
 
     std_msgs::Float64 baseMsg;
     std_msgs::Float64 shoulderMsg;
@@ -228,7 +295,7 @@ void callback(const geometry_msgs::Twist::ConstPtr& msg)
     shoulderMsg.data    = theta2;
     elbowMsg.data       = theta3;
     wristPitchMsg.data  = theta4;
-    wristRollMsg.data   = 0;
+    wristRollMsg.data   = theta5;
 
     ROS_INFO_NAMED(NODE_NAME, "Base:        %f", theta1);
     ROS_INFO_NAMED(NODE_NAME, "Shoulder:    %f", theta2);
