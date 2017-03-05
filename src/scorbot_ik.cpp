@@ -242,7 +242,7 @@ void callback(const geometry_msgs::Twist::ConstPtr& msg)
     shoulderPub.publish(    shoulderMsg);
     elbowPub.publish(          elbowMsg);
     wristPitchPub.publish(wristPitchMsg);
-    wristRollPub.publish( wristRollMsg );
+    wristRollPub.publish(  wristRollMsg);
 }
 
 int main(int argc, char **argv)
