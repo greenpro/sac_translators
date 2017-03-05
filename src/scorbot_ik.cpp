@@ -19,7 +19,14 @@
 #define NODE_NAME "IK"
 #define PI 3.14159265
 
-using namespace std;
+// Dimentions
+#define D1 (334.25)
+#define D2 (137.35)
+
+#define A1 (101.25)
+#define A2 (220)
+#define A3 (220)
+#define A4 (0)
 
 ros::Publisher       basePub;
 ros::Publisher   shoulderPub;
@@ -27,7 +34,7 @@ ros::Publisher      elbowPub;
 ros::Publisher  wristRollPub;
 ros::Publisher wristPitchPub;
 
-void transMat(float x, float y, float z, float** out)
+void transMat(float x, float y, float z, float out[4][4])
 {
     out[0][0] = 1;
     out[0][1] = 0;
@@ -50,7 +57,7 @@ void transMat(float x, float y, float z, float** out)
     out[3][3] = 1;
 }
 
-void rollMat(float theta, float** out)
+void rollMat(float theta, float out[4][4])
 {
     out[0][0] = 1;
     out[0][1] = 0;
@@ -73,7 +80,7 @@ void rollMat(float theta, float** out)
     out[3][3] = 1;
 }
 
-void pitchMat(float theta, float** out)
+void pitchMat(float theta, float out[4][4])
 {
     out[0][0] = cos(theta);
     out[0][1] = 0;
@@ -96,7 +103,7 @@ void pitchMat(float theta, float** out)
     out[3][3] = 1;
 }
 
-void yawMat(float theta, float** out)
+void yawMat(float theta, float out[4][4])
 {
     out[0][0] = cos(theta);
     out[0][1] = 0 - sin(theta);
@@ -119,7 +126,7 @@ void yawMat(float theta, float** out)
     out[3][3] = 1;
 }
 
-void matMult(float** mat0, float** mat1, float** out)
+void matMult(float mat0[4][4], float mat1[4][4], float out[4][4])
 {
     float mat[4][4];
     
@@ -145,25 +152,25 @@ void callback(const geometry_msgs::Twist::ConstPtr& msg)
     float z = msg->linear.z;
 
     // Transformation Matrix
-    float **tmat;
+    float tmat[4][4];
     transMat(x, y, z, tmat);
 
-    float **rmat;
+    float rmat[4][4];
     rollMat(roll, rmat);
 
-    float **pmat;
+    float pmat[4][4];
     pitchMat(pitch, pmat);
 
-    float **ymat;
+    float ymat[4][4];
     yawMat(yaw, ymat);
 
-    float **out1;
+    float out1[4][4];
     matMult(ymat, pmat, out1);
     
-    float **out2;
+    float out2[4][4];
     matMult(out1, rmat, out2);
 
-    float **out3;
+    float out3[4][4];
     matMult(out2, tmat, out3);
 
     // Matrix variables
@@ -183,36 +190,27 @@ void callback(const geometry_msgs::Twist::ConstPtr& msg)
     float py = out3[1][4];
     float pz = out3[2][4];
 
-    // Distances
-    float d1 = 0.22;
-    float d2 = 0.22;
-
-    float a1 = 0;
-    float a2 = 0;
-    float a3 = 0;
-    float a4 = 0;
-
     // equations
-    float sqrt_pos = sqrt(pow(px, 2) + pow(py, 2) - pow(d2, 2));
+    float sqrt_pos = sqrt(pow(px, 2) + pow(py, 2) - pow(D2, 2));
     float sqrt_neg = 0 - sqrt_neg;
-    float theta1_pos = atan2(py, px) - atan2(d2, sqrt_pos);
-    float theta1_neg = atan2(py, px) - atan2(d2, sqrt_neg);
+    float theta1_pos = atan2(py, px) - atan2(D2, sqrt_pos);
+    float theta1_neg = atan2(py, px) - atan2(D2, sqrt_neg);
     // to change between pos and neg
     float theta1 = theta1_pos;
 
-    float pz_prime = pz + a4;
-    float top = pow(cos(theta1) * px + sin(theta1) * py - a1, 2) + pow(d1 - pz_prime + a4, 2) - pow(a2, 2) - pow(a3, 2);
-    float bot = 2 * a2 * a3;
+    float pz_prime = pz + A4;
+    float top = pow(cos(theta1) * px + sin(theta1) * py - A1, 2) + pow(D1 - pz_prime + A4, 2) - pow(A2, 2) - pow(A3, 2);
+    float bot = 2 * A2 * A3;
     float theta3_pos = acos( top / bot );
     float theta3_neg = 0 - theta3_pos;
     // to change between pos and neg
     float theta3 = theta3_pos;
 
-    sqrt_pos = sqrt( pow(d1 - pz_prime + a4, 2) + pow(cos(theta1) * px + sin(theta1) * py - a1, 2) - pow(a3 * cos(theta3) + a2, 2) );
+    sqrt_pos = sqrt( pow(D1 - pz_prime + A4, 2) + pow(cos(theta1) * px + sin(theta1) * py - A1, 2) - pow(A3 * cos(theta3) + A2, 2) );
     sqrt_neg = 0 - sqrt_neg;
-    float top_pos = (d1 - pz_prime + a4) + sqrt_pos;
-    float top_neg = (d1 - pz_prime + a4) + sqrt_neg;
-    bot = (cos(theta1) * px + sin(theta1) * py - a1) + (a3 * cos(theta3) + a2);
+    float top_pos = (D1 - pz_prime + A4) + sqrt_pos;
+    float top_neg = (D1 - pz_prime + A4) + sqrt_neg;
+    bot = (cos(theta1) * px + sin(theta1) * py - A1) + (A3 * cos(theta3) + A2);
     float theta2_pos = (top_pos / bot);
     float theta2_neg = (top_neg / bot);
     // to change between pos and neg
