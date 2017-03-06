@@ -3,19 +3,6 @@
 #include <std_msgs/Float64.h>
 #include <geometry_msgs/Twist.h>
 
-#include <moveit/robot_model_loader/robot_model_loader.h>
-#include <moveit/planning_interface/planning_interface.h>
-#include <moveit/planning_scene/planning_scene.h>
-#include <moveit/planning_scene_interface/planning_scene_interface.h>
-#include <moveit/move_group_interface/move_group_interface.h>
-#include <moveit/kinematic_constraints/utils.h>
-#include <moveit/robot_model/robot_model.h>
-#include <moveit/robot_state/robot_state.h>
-#include <moveit_msgs/DisplayTrajectory.h>
-#include <moveit_msgs/PlanningScene.h>
-
-#include <boost/scoped_ptr.hpp>
-
 #define NODE_NAME "IK"
 #define PI 3.14159265
 
@@ -129,13 +116,52 @@ void yawMat(float theta, float out[4][4])
 
 void matMult(float mat0[4][4], float mat1[4][4], float out[4][4])
 {
-    float mat[4][4];
+    ROS_INFO_NAMED(NODE_NAME, "############################################");
     
-    for (int x = 0; x < 4; x++)
+    ROS_INFO_NAMED(NODE_NAME, "_mat0_______________________________________");
+    ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", mat0[0][0], mat0[0][1], mat0[0][2], mat0[0][3]);  
+    ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", mat0[1][0], mat0[1][1], mat0[1][2], mat0[1][3]);  
+    ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", mat0[2][0], mat0[2][1], mat0[2][2], mat0[2][3]);  
+    ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", mat0[3][0], mat0[3][1], mat0[3][2], mat0[3][3]);  
+    ROS_INFO_NAMED(NODE_NAME, "L__________________________________________J");
+    ROS_INFO_NAMED(NODE_NAME, "_mat1_______________________________________");
+    ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", mat1[0][0], mat1[0][1], mat1[0][2], mat1[0][3]);  
+    ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", mat1[1][0], mat1[1][1], mat1[1][2], mat1[1][3]);  
+    ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", mat1[2][0], mat1[2][1], mat1[2][2], mat1[2][3]);  
+    ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", mat1[3][0], mat1[3][1], mat1[3][2], mat1[3][3]);  
+    ROS_INFO_NAMED(NODE_NAME, "L__________________________________________J");
+    for (int ox = 0; ox < 4; ox++)
     {
-        for (int y = 0; y < 4; y++)
+        for (int oy = 0; oy < 4; oy++)
         {
-            out[y][x] = mat[y][x] * mat[x][y];
+            out[oy][ox] = 0;
+            for (int i = 0; i < 4; i++)
+            {
+                out[oy][ox] += mat0[oy][i] * mat1[i][ox];
+            }
+        }
+    }
+    ROS_INFO_NAMED(NODE_NAME, "_out_=_mat0_*_mat1__________________________");
+    ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", out[0][0], out[0][1], out[0][2], out[0][3]);  
+    ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", out[1][0], out[1][1], out[1][2], out[1][3]);  
+    ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", out[2][0], out[2][1], out[2][2], out[2][3]);  
+    ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", out[3][0], out[3][1], out[3][2], out[3][3]);  
+    ROS_INFO_NAMED(NODE_NAME, "L__________________________________________J");
+}
+
+void matAdd(float mat0[4][4], float mat1[4][4], float out[4][4])
+{
+    for (int x=0; x<4; x++)
+    {
+        for (int y=0; y<4; y++)
+        {
+            if (mat0[y][x] == 1)
+                mat0[y][x] = 0;
+
+            if (mat1[y][x] == 1)
+                mat1[y][x] = 0;
+
+            out[y][x] = mat0[y][x] + mat1[y][x]; 
         }
     }
 }
@@ -189,44 +215,80 @@ void callback(const geometry_msgs::Twist::ConstPtr& msg)
     // Transformation Matrix
     float tmat[4][4];
     transMat(x, y, z, tmat);
+    //ROS_INFO_NAMED(NODE_NAME, "_tmat_______________________________________");
+    //ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", tmat[0][0], tmat[0][1], tmat[0][2], tmat[0][3]);  
+    //ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", tmat[1][0], tmat[1][1], tmat[1][2], tmat[1][3]);  
+    //ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", tmat[2][0], tmat[2][1], tmat[2][2], tmat[2][3]);  
+    //ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", tmat[3][0], tmat[3][1], tmat[3][2], tmat[3][3]);  
+    //ROS_INFO_NAMED(NODE_NAME, "L__________________________________________J");
 
     float rmat[4][4];
     rollMat(roll, rmat);
+    //ROS_INFO_NAMED(NODE_NAME, "_rmat_______________________________________");
+    //ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", rmat[0][0], rmat[0][1], rmat[0][2], rmat[0][3]);  
+    //ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", rmat[1][0], rmat[1][1], rmat[1][2], rmat[1][3]);  
+    //ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", rmat[2][0], rmat[2][1], rmat[2][2], rmat[2][3]);  
+    //ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", rmat[3][0], rmat[3][1], rmat[3][2], rmat[3][3]);  
+    //ROS_INFO_NAMED(NODE_NAME, "L__________________________________________J");
 
     float pmat[4][4];
     pitchMat(pitch, pmat);
+    //ROS_INFO_NAMED(NODE_NAME, "_pmat_______________________________________");
+    //ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", pmat[0][0], pmat[0][1], pmat[0][2], pmat[0][3]);  
+    //ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", pmat[1][0], pmat[1][1], pmat[1][2], pmat[1][3]);  
+    //ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", pmat[2][0], pmat[2][1], pmat[2][2], pmat[2][3]);  
+    //ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", pmat[3][0], pmat[3][1], pmat[3][2], pmat[3][3]);  
+    //ROS_INFO_NAMED(NODE_NAME, "L__________________________________________J");
 
     float ymat[4][4];
     yawMat(yaw, ymat);
+    //ROS_INFO_NAMED(NODE_NAME, "_ymat_______________________________________");
+    //ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", ymat[0][0], ymat[0][1], ymat[0][2], ymat[0][3]);  
+    //ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", ymat[1][0], ymat[1][1], ymat[1][2], ymat[1][3]);  
+    //ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", ymat[2][0], ymat[2][1], ymat[2][2], ymat[2][3]);  
+    //ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", ymat[3][0], ymat[3][1], ymat[3][2], ymat[3][3]);  
+    //ROS_INFO_NAMED(NODE_NAME, "L__________________________________________J");
 
     float out1[4][4];
-    matMult(ymat, pmat, out1);
+    matAdd(ymat, pmat, out1);
     
     float out2[4][4];
-    matMult(out1, rmat, out2);
+    matAdd(out1, rmat, out2);
+    //ROS_INFO_NAMED(NODE_NAME, "_out2_=_rmat_*_out1_________________________");
+    //ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", out2[0][0], out2[0][1], out2[0][2], out2[0][3]);  
+    //ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", out2[1][0], out2[1][1], out2[1][2], out2[1][3]);  
+    //ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", out2[2][0], out2[2][1], out2[2][2], out2[2][3]);  
+    //ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", out2[3][0], out2[3][1], out2[3][2], out2[3][3]);  
+    //ROS_INFO_NAMED(NODE_NAME, "L__________________________________________J");
 
     float out3[4][4];
-    matMult(out2, tmat, out3);
+    matAdd(out2, tmat, out3);
+    //ROS_INFO_NAMED(NODE_NAME, "_out3_=_tmat_*_out2_________________________");
+    //ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", out3[0][0], out3[0][1], out3[0][2], out3[0][3]);  
+    //ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", out3[1][0], out3[1][1], out3[1][2], out3[1][3]);  
+    //ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", out3[2][0], out3[2][1], out3[2][2], out3[2][3]);  
+    //ROS_INFO_NAMED(NODE_NAME, "|%f %f %f %f|", out3[3][0], out3[3][1], out3[3][2], out3[3][3]);  
+    //ROS_INFO_NAMED(NODE_NAME, "L__________________________________________J");
 
     // Matrix variables
     float nx = out3[0][0];
-    float ny = out3[0][1];
-    float nz = out3[0][2];
-
-    float ox = out3[1][0];
+    float ny = out3[1][0];
+    float nz = out3[2][0];
+                        
+    float ox = out3[0][1];
     float oy = out3[1][1];
-    float oz = out3[1][2];
-    
-    float ax = out3[2][0];
-    float ay = out3[2][1];
+    float oz = out3[2][1];
+                        
+    float ax = out3[0][2];
+    float ay = out3[1][2];
     float az = out3[2][2];
 
-    float px = out3[0][4];
-    float py = out3[1][4];
-    float pz = out3[2][4];
+    float px = out3[0][3];
+    float py = out3[1][3];
+    float pz = out3[2][3];
 
     // IK
-    float theta1   = atan2(py, px);
+    float theta1   = atan2(px, py);
 
     float c1 = cos(theta1);
     float s1 = sin(theta1);
@@ -297,11 +359,21 @@ void callback(const geometry_msgs::Twist::ConstPtr& msg)
     wristPitchMsg.data  = theta4;
     wristRollMsg.data   = theta5;
 
-    ROS_INFO_NAMED(NODE_NAME, "Base:        %f", theta1);
-    ROS_INFO_NAMED(NODE_NAME, "Shoulder:    %f", theta2);
-    ROS_INFO_NAMED(NODE_NAME, "Elbow:       %f", theta3);
-    ROS_INFO_NAMED(NODE_NAME, "Wrist Pitch: %f", theta4);
-    ROS_INFO_NAMED(NODE_NAME, "Wrist Roll:  %f", 0);
+    ROS_INFO_NAMED(NODE_NAME, "----- INPUTS -----");
+    ROS_INFO_NAMED(NODE_NAME, "px:    %f", px);
+    ROS_INFO_NAMED(NODE_NAME, "py:    %f", py);
+    ROS_INFO_NAMED(NODE_NAME, "pz:    %f", pz);
+    ROS_INFO_NAMED(NODE_NAME, "ax:    %f", ax);
+    ROS_INFO_NAMED(NODE_NAME, "ay:    %f", ay);
+    ROS_INFO_NAMED(NODE_NAME, "az:    %f", az);
+    ROS_INFO_NAMED(NODE_NAME, "pitch: %f", pitch);
+    ROS_INFO_NAMED(NODE_NAME, "roll:  %f", roll);
+    ROS_INFO_NAMED(NODE_NAME, "----- JOINTS -----");
+    ROS_INFO_NAMED(NODE_NAME, "Base:        %f", theta1 * 180 / PI);
+    ROS_INFO_NAMED(NODE_NAME, "Shoulder:    %f", theta2 * 180 / PI);
+    ROS_INFO_NAMED(NODE_NAME, "Elbow:       %f", theta3 * 180 / PI);
+    ROS_INFO_NAMED(NODE_NAME, "Wrist Pitch: %f", theta4 * 180 / PI);
+    ROS_INFO_NAMED(NODE_NAME, "Wrist Roll:  %f", theta5 * 180 / PI);
 
     basePub.publish(            baseMsg);
     shoulderPub.publish(    shoulderMsg);
