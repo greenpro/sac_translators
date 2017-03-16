@@ -287,6 +287,8 @@ void callback(const geometry_msgs::Twist::ConstPtr& msg)
     float py = out3[1][3];
     float pz = out3[2][3];
 
+    //TODO :: set the px,y,z and ax,y,z to inputs or constants and see what it does with other inputs
+
     // IK
     float theta1   = atan2(px, py);
 
