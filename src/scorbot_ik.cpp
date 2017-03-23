@@ -2,6 +2,7 @@
 #include <pluginlib/class_loader.h>
 #include <std_msgs/Float64.h>
 #include <geometry_msgs/Twist.h>
+#include <sac_translators/target.h>
 
 #define NODE_NAME "IK"
 #define PI 3.14159265
@@ -15,6 +16,15 @@
 #define A2 (220)
 #define A3 (220)
 #define A4 (0)// remove
+
+#define B_MIN (-2)
+#define B_MAX (2)
+#define S_MIN (-2)
+#define S_MAX (2)
+#define E_MIN (-2)
+#define E_MAX (2)
+#define WP_MIN (-2)
+#define WP_MAX (2)
 
 ros::Publisher       basePub;
 ros::Publisher   shoulderPub;
@@ -166,38 +176,145 @@ void matAdd(float mat0[4][4], float mat1[4][4], float out[4][4])
     }
 }
 
-void ik(float ax, float ay, float az, float px, float py, float pz, float pitch, float roll)
+//void ik(float ax, float ay, float az, float px, float py, float pz, float pitch, float roll)
+//{
+//    float theta1   = atan2(py, px);
+//
+//    float c1 = cos(theta1);
+//    float s1 = sin(theta1);
+//    float theta234 = 0 - atan2(c1 * ax + s1 * ay, az);
+//    
+//    float s234 = sin(theta234);
+//
+//    float c234 = cos(theta234);
+//
+//    float c3_top = pow(c1 * px + s1 * py - s234 * D5, 2) + pow(pz + c234 * D5, 2) - pow(A2, 2) - pow(A3, 2);
+//    float c3_bot = 2 * A2 * A3;
+//    float c3 = c3_top / c3_bot;
+//
+//    float s3 = sqrt(1 + pow(c3, 2));
+//
+//    float theta3   = atan2(s3, c3);
+//
+//    float c2_top = (c1 * px + s1 * py - s234 * D5) * (A3 * c3 + A2) + (pz + c234 * D5) * s3 * A3;
+//    float c2_bot = pow(A3 * c3 + A2, 2) + pow(s3, 2) * pow(A3, 2);
+//    float c2 = c2_top / c2_bot;
+//    
+//    float s2_top = (c1 * px + s1 * py - s234 * D5) * (A3 * s3) + (pz + c234 * D5) * (A3 * c3 + A2);
+//    float s2_bot = pow(A3 * c3 + A2, 2) + pow(s3, 2) * pow(A3, 2);
+//    float s2 = s2_top / s2_bot;
+//
+//    float theta2   = atan2(s2, c2);
+//
+//    float theta4   = pitch;
+//    float theta5   = roll;
+//}
+
+bool checkAngles(float angles[5])
 {
-    float theta1   = atan2(py, px);
+    // For the scorbot er-III there is no limit for the roll.
+    if (angles[0] < B_MIN || angles[0] > B_MAX ||
+            angles[1] < S_MIN || angles[1] > B_MAX ||
+            angles[2] < E_MIN || angles[2] > E_MAX ||
+            angles[3] < WP_MIN || angles[3] > WP_MAX //||
+            //angles[4] < WR_MIN || angles[4] > WR_MIN
+            )
+        return false;
+}
 
-    float c1 = cos(theta1);
-    float s1 = sin(theta1);
-    float theta234 = 0 - atan2(c1 * ax + s1 * ay, az);
-    
-    float s234 = sin(theta234);
+// NOTE :: All angles are in radians.
+// NOTE :: All distances in this function are in meters to follow the ros standard.
+// NOTE :: For this function angles contain capitolized letters distances are lower case and modifications to the variable are after the "_".
+bool ik(float x, float y, float z, float roll, float pitch, float out[5])
+{
+    // check if the end effector is beneath the floor.
+    if (z < 0)
+        return false;
 
-    float c234 = cos(theta234);
+    // knowns
+    float d1 = 0.200;
+    float d2 = 0.100;
+    float d3 = 0.220;
+    float d4 = 0.220;
+    float d5 = 0.150;
 
-    float c3_top = pow(c1 * px + s1 * py - s234 * D5, 2) + pow(pz + c234 * D5, 2) - pow(A2, 2) - pow(A3, 2);
-    float c3_bot = 2 * A2 * A3;
-    float c3 = c3_top / c3_bot;
+    // wrist roll
+    float Wr = roll;
 
-    float s3 = sqrt(1 + pow(c3, 2));
+    // wrist pitch
+    float wr = sin(pitch) * d5;
 
-    float theta3   = atan2(s3, c3);
+    float x_squared = pow(x, 2);
 
-    float c2_top = (c1 * px + s1 * py - s234 * D5) * (A3 * c3 + A2) + (pz + c234 * D5) * s3 * A3;
-    float c2_bot = pow(A3 * c3 + A2, 2) + pow(s3, 2) * pow(A3, 2);
-    float c2 = c2_top / c2_bot;
-    
-    float s2_top = (c1 * px + s1 * py - s234 * D5) * (A3 * s3) + (pz + c234 * D5) * (A3 * c3 + A2);
-    float s2_bot = pow(A3 * c3 + A2, 2) + pow(s3, 2) * pow(A3, 2);
-    float s2 = s2_top / s2_bot;
+    float y_squared = pow(y, 2);
 
-    float theta2   = atan2(s2, c2);
+    float r = sqrt(x_squared + y_squared);
 
-    float theta4   = pitch;
-    float theta5   = roll;
+    float esr = r - wr - d2;
+
+    float wh = cos(pitch) * d5;
+
+    float wz = z - wh;
+
+    // check if the wrist joint or the back of the end effector is beneath the floor.
+    // the 0.004 is to account for the radius of the joint.
+    if (wz - 0.004 < 0 || (wz - wh) < 0)
+        return false;
+
+    float esz = wz - d1;
+
+    float esr_squared = pow(esr, 2);
+
+    float esz_squared = pow(esz, 2);
+
+    float e_squared = esr_squared + esz_squared;
+
+    float e = sqrt(e_squared);
+
+    float d3_squared = pow(d3, 2);
+
+    float d4_squared = pow(d4, 2);
+
+    float D3_top = d3_squared - d4_squared - e_squared;
+    float D3_bot = -2 * d4 * e;
+    float D3 = acos(D3_top / D3_bot);
+
+    float ESr_top = esr_squared - e_squared - esz_squared;
+    float ESr_bot = -2 * e * esz;
+    float ESr = acos(ESr_top / ESr_bot);
+
+    float Wp = 270 - pitch - D3 - ESr;
+
+    // elbow
+    float E_top = e_squared - d3_squared - d4_squared;
+    float E_bot = -2 * d3 * d4;
+    float E = acos(E_top / E_bot);
+
+    // shoulder
+    float D4 = 180 - E - D3;
+
+    float ESz = 90 - ESr;
+
+    float S = 180 - D4 - ESz;
+
+    // base
+    float B = atan2(y, x);
+
+    // assign the outputs
+    out[0] = B;
+    out[1] = S;
+    out[2] = E;
+    out[3] = Wp;
+    out[4] = Wr;
+
+    if (checkAngles(out))
+        return true;
+
+    out[2] = 0 - out[2];
+    out[3] = 270 - pitch - out[3];
+    out[1] = 180 - out[2] - out[3];
+
+    return checkAngles(out);
 }
 
 void callback(const geometry_msgs::Twist::ConstPtr& msg)

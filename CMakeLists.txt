@@ -1,29 +1,31 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(sac_translators)
 
-add_compile_options(-std=c++11)
+add_compile_options(-std=c++14)
 
-find_package(Eigen3 REQUIRED)
-
-if (NOT EIGEN3_INCLUDE_DIRS)
-    set(EIGEN3_INCLUDE_DIRS $(EIGEN3_INCLUDE_DIR}))
-endif()
+# Include if using moveit.
+#find_package(Eigen3 REQUIRED)
+#
+#if (NOT EIGEN3_INCLUDE_DIRS)
+#    set(EIGEN3_INCLUDE_DIRS $(EIGEN3_INCLUDE_DIR}))
+#endif()
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  moveit_core
-  moveit_ros_planning
-  moveit_ros_planning_interface
-  moveit_visual_tools
-  pluginlib
+  #moveit_core
+  #moveit_ros_planning
+  #moveit_ros_planning_interface
+  #moveit_visual_tools
+  #pluginlib
   roscpp
   rospy
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED system filesystem date_time thread)
+#find_package(Boost REQUIRED system filesystem date_time thread)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -56,11 +58,10 @@ find_package(Boost REQUIRED system filesystem date_time thread)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+  FILES
+  target.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -76,11 +77,11 @@ find_package(Boost REQUIRED system filesystem date_time thread)
 #   Action2.action
 # )
 
-## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+# Generate added messages and services with any dependencies listed here
+ generate_messages(
+   DEPENDENCIES
+   std_msgs
+ )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -111,14 +112,14 @@ find_package(Boost REQUIRED system filesystem date_time thread)
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-  CATKIN_DEPENDS
-    moveit_core
-    moveit_ros_planning_interface
-    interactive_markers
-  DEPENDS
-    EIGEN3
-)
+#catkin_package(
+#  CATKIN_DEPENDS
+#    moveit_core
+#    moveit_ros_planning_interface
+#    interactive_markers
+#  DEPENDS
+#    EIGEN3
+#)
 
 ###########
 ## Build ##
@@ -207,11 +208,11 @@ link_directories(
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
-add_executable(scorbot_moveit src/scorbot_moveit.cpp)
-target_link_libraries(scorbot_moveit ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-
-add_executable(andreas_arm_moveit src/andreas_arm_moveit.cpp)
-target_link_libraries(andreas_arm_moveit ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+#add_executable(scorbot_moveit src/scorbot_moveit.cpp)
+#target_link_libraries(scorbot_moveit ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+#
+#add_executable(andreas_arm_moveit src/andreas_arm_moveit.cpp)
+#target_link_libraries(andreas_arm_moveit ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(scorbot_ik src/scorbot_ik.cpp)
 target_link_libraries(scorbot_ik ${catkin_LIBRARIES})
