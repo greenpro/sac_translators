@@ -14,11 +14,6 @@ add_compile_options(-std=c++14)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  #moveit_core
-  #moveit_ros_planning
-  #moveit_ros_planning_interface
-  #moveit_visual_tools
-  #pluginlib
   roscpp
   rospy
   message_generation
@@ -215,4 +210,5 @@ link_directories(
 #target_link_libraries(andreas_arm_moveit ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(scorbot_ik src/scorbot_ik.cpp)
+add_dependencies(scorbot_ik sac_translators_generate_messages_cpp)
 target_link_libraries(scorbot_ik ${catkin_LIBRARIES})

@@ -1,8 +1,8 @@
-std_msgs/Float64 x
-std_msgs/Float64 y
-std_msgs/Float64 z
+float64 x
+float64 y
+float64 z
 
-std_msgs/Float64 roll
-std_msgs/Float64 pitch
+float64 roll
+float64 pitch
 
-std_msgs/Float64 time
+float64 time
