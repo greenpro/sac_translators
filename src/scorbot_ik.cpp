@@ -232,75 +232,44 @@ bool ik(float x, float y, float z, float R, float P, float out[5])
     float d3 = 0.220;
     float d4 = 0.150;
 
-    d4z = sin(P) * d4;
-
-    // wrist roll
-    float Wr = roll;
-
-    // wrist pitch
-    float d4z = sin(pitch) * d4;
-    float d4r = cos(pitch) * d4;
-
-    float x_squared = pow(x, 2);
-
-    float y_squared = pow(y, 2);
-
-    float r = sqrt( + y_squared);
-
-    float esr = r - wr - d2;
-
-    float wh = cos(pitch) * d5;
-
-    float wz = z - wh;
+    float d4z = sin(P) * d4;
 
     // check if the wrist joint or the back of the end effector is beneath the floor.
     // the 0.004 is to account for the radius of the joint.
-    if (wz - 0.004 < 0 || (wz - wh) < 0)
+    if (z - d4z - 0.004 < 0 || z - 2 * d4z - 0.004 < 0)
     {
         ROS_INFO("Invalid wrist joint position");
 //        return false;
     }
-
-    float esz = wz - d1;
-
-    float esr_squared = pow(esr, 2);
-
-    float esz_squared = pow(esz, 2);
-
-    float e_squared = esr_squared + esz_squared;
-
-    float e = PI - sqrt(e_squared);
-
+    
+    float d4r = cos(P) * d4;
+    float x_squared = pow(x, 2);
+    float y_squared = pow(y, 2);
+    float r = sqrt(x_squared + y_squared);
+    float er = r - d1 - d4r;
+    float ez = z - d0 - d4z;
+    float er_squared = pow(er, 2);
+    float ez_squared = pow(ez, 2);
+    float e_squared = er_squared + ez_squared;
+    float e = sqrt(e_squared);
+    float d2_squared = pow(d2, 2);
     float d3_squared = pow(d3, 2);
-
-    float d4_squared = pow(d4, 2);
-
-    float D3_top = d3_squared - d4_squared - e_squared;
-    float D3_bot = -2 * d4 * e;
-    float D3 = acos(D3_top / D3_bot);
-
-    float ESr_top = esr_squared - e_squared - esz_squared;
-    float ESr_bot = -2 * e * esz;
-    float ESr = acos(ESr_top / ESr_bot);
-
-    float Wp = (3 * PI / 2) - pitch - D3 - ESr;
-
-    // elbow
-    float E_top = e_squared - d3_squared - d4_squared;
-    float E_bot = -2 * d3 * d4;
-    float EInner = acos(E_top / E_bot);
-
-    float E = PI - EInner;
-
-    // shoulder
-    float D4 = PI - EInner - D3;
-
-    float ESz = (PI / 2) - ESr;
-
-    float S = D4 + ESz;
-
-    // base
+    float A_top = e_squared - d2_squared - d3_squared;
+    float A_bot = -2 * d2 * d3;
+    float A = acos(A_top / A_bot);
+    float E_top = e_squared - d3_squared - d2_squared;
+    float E_bot = -2 * d2 * d3;
+    float E = acos(E_top / E_bot) - PI;
+    float Ez_top = ez_squared - e_squared - er_squared;
+    float Ez_bot = -2 * e * er;
+    float Ez = acos(Ez_top / Ez_bot);
+    float S = A + Ez;
+    float Salt = (E - S);
     float B = atan2(y, x);
+    float Wr = R;
+    float G = PI - Salt;
+    float H = PI - S;
+    float Wp = PI - G + P;
 
     // assign the outputs
     out[0] = B;
@@ -319,9 +288,12 @@ bool ik(float x, float y, float z, float R, float P, float out[5])
 ;//        return true;
     ROS_INFO("Invalid joint angles");
 
-    out[2] = 0 - out[2];
-    out[3] = (3 * PI / 2) - pitch - out[3];
-    out[1] = PI - out[2] - out[3];
+    float Ealt = -E;
+    float Wpalt = (H + P) - PI;
+
+    out[1] = Salt;
+    out[2] = Ealt;
+    out[3] = Wpalt;
 
     ROS_INFO("Alternate");
     ROS_INFO("Base:\t%f", out[0]);
