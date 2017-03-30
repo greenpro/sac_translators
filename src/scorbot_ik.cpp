@@ -2,7 +2,7 @@
 #include <pluginlib/class_loader.h>
 #include <std_msgs/Float64.h>
 #include <geometry_msgs/Twist.h>
-#include <sac_msgs/target.h>
+#include <sac_msgs/Target.h>
 
 #define NODE_NAME "IK"
 #define PI 3.14159265
@@ -166,40 +166,6 @@ void matAdd(float mat0[4][4], float mat1[4][4], float out[4][4])
     }
 }
 
-//void ik(float ax, float ay, float az, float px, float py, float pz, float pitch, float roll)
-//{
-//    float theta1   = atan2(py, px);
-//
-//    float c1 = cos(theta1);
-//    float s1 = sin(theta1);
-//    float theta234 = 0 - atan2(c1 * ax + s1 * ay, az);
-//    
-//    float s234 = sin(theta234);
-//
-//    float c234 = cos(theta234);
-//
-//    float c3_top = pow(c1 * px + s1 * py - s234 * D5, 2) + pow(pz + c234 * D5, 2) - pow(A2, 2) - pow(A3, 2);
-//    float c3_bot = 2 * A2 * A3;
-//    float c3 = c3_top / c3_bot;
-//
-//    float s3 = sqrt(1 + pow(c3, 2));
-//
-//    float theta3   = atan2(s3, c3);
-//
-//    float c2_top = (c1 * px + s1 * py - s234 * D5) * (A3 * c3 + A2) + (pz + c234 * D5) * s3 * A3;
-//    float c2_bot = pow(A3 * c3 + A2, 2) + pow(s3, 2) * pow(A3, 2);
-//    float c2 = c2_top / c2_bot;
-//    
-//    float s2_top = (c1 * px + s1 * py - s234 * D5) * (A3 * s3) + (pz + c234 * D5) * (A3 * c3 + A2);
-//    float s2_bot = pow(A3 * c3 + A2, 2) + pow(s3, 2) * pow(A3, 2);
-//    float s2 = s2_top / s2_bot;
-//
-//    float theta2   = atan2(s2, c2);
-//
-//    float theta4   = pitch;
-//    float theta5   = roll;
-//}
-
 bool checkAngles(float angles[5])
 {
     ROS_INFO("0: %f - %f",  B_MIN,  B_MAX);
@@ -320,7 +286,7 @@ bool ik(float x, float y, float z, float R, float P, float out[5])
     return false;
 }
 
-void callback(const sac_msgs::target::ConstPtr& msg)
+void callback(const sac_msgs::Target::ConstPtr& msg)
 {
     ROS_INFO_NAMED(NODE_NAME, "Hit");
 
