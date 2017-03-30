@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   message_generation
+  sac_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -53,10 +54,6 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  target.msg
-)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -73,10 +70,10 @@ add_message_files(
 # )
 
 # Generate added messages and services with any dependencies listed here
- generate_messages(
-   DEPENDENCIES
-   std_msgs
- )
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -107,14 +104,10 @@ add_message_files(
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
-#catkin_package(
-#  CATKIN_DEPENDS
-#    moveit_core
-#    moveit_ros_planning_interface
-#    interactive_markers
-#  DEPENDS
-#    EIGEN3
-#)
+catkin_package(
+  CATKIN_DEPENDS
+    message_runtime
+)
 
 ###########
 ## Build ##
@@ -132,6 +125,7 @@ include_directories(
 link_directories(
     ${catkin_LIBRARY_DIRS}
 )
+#TODO :: clean this up later
 
 ## Declare a C++ library
 # add_library(sac_translators
@@ -210,5 +204,4 @@ link_directories(
 #target_link_libraries(andreas_arm_moveit ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(scorbot_ik src/scorbot_ik.cpp)
-add_dependencies(scorbot_ik sac_translators_generate_messages_cpp)
 target_link_libraries(scorbot_ik ${catkin_LIBRARIES})

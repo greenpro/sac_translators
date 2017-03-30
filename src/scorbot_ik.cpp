@@ -2,7 +2,7 @@
 #include <pluginlib/class_loader.h>
 #include <std_msgs/Float64.h>
 #include <geometry_msgs/Twist.h>
-#include <sac_translators/target.h>
+#include <sac_msgs/target.h>
 
 #define NODE_NAME "IK"
 #define PI 3.14159265
@@ -202,6 +202,12 @@ void matAdd(float mat0[4][4], float mat1[4][4], float out[4][4])
 
 bool checkAngles(float angles[5])
 {
+    ROS_INFO("0: %f - %f",  B_MIN,  B_MAX);
+    ROS_INFO("1: %f - %f",  S_MIN,  S_MAX);
+    ROS_INFO("2: %f - %f",  E_MIN,  E_MAX);
+    ROS_INFO("3: %f - %f", WP_MIN, WP_MAX);
+    ROS_INFO("4: -INF - INF\n");
+    
     // For the scorbot er-III there is no limit for the roll.
     if (angles[0] < B_MIN || angles[0] > B_MAX ||
             angles[1] < S_MIN || angles[1] > B_MAX ||
@@ -254,8 +260,8 @@ bool ik(float x, float y, float z, float R, float P, float out[5])
     float e = sqrt(e_squared);
     float d2_squared = pow(d2, 2);
     float d3_squared = pow(d3, 2);
-    float A_top = e_squared - d2_squared - d3_squared;
-    float A_bot = -2 * d2 * d3;
+    float A_top = d3_squared - d2_squared - e_squared;
+    float A_bot = -2 * d2 * e;
     float A = acos(A_top / A_bot);
     float E_top = e_squared - d3_squared - d2_squared;
     float E_bot = -2 * d2 * d3;
@@ -266,10 +272,16 @@ bool ik(float x, float y, float z, float R, float P, float out[5])
     float S = A + Ez;
     float Salt = (E - S);
     float B = atan2(y, x);
-    float Wr = R;
     float G = PI - Salt;
     float H = PI - S;
-    float Wp = PI - G + P;
+    float Wp = PI / 2 - G + P;
+    float Wr = R;
+    
+    if (er > d2 + d3)
+    {
+        ROS_INFO("The point is too far away.");
+        return false;
+    }
 
     // assign the outputs
     out[0] = B;
@@ -278,11 +290,11 @@ bool ik(float x, float y, float z, float R, float P, float out[5])
     out[3] = Wp;
     out[4] = Wr;
 
-    ROS_INFO("Base:\t%f", out[0]);
-    ROS_INFO("Shoulder:\t%f", out[1]);
-    ROS_INFO("Elbow:\t%f", out[2]);
-    ROS_INFO("Wrist Pitch:\t%f", out[3]);
-    ROS_INFO("Wrist Roll:\t%f", out[4]);
+    ROS_INFO("Base:        %f - %f",   out[0], out[0] * 180 / PI);
+    ROS_INFO("Shoulder:    %f - %f",   out[1], out[1] * 180 / PI);
+    ROS_INFO("Elbow:       %f - %f",   out[2], out[2] * 180 / PI);
+    ROS_INFO("Wrist Pitch: %f - %f",   out[3], out[3] * 180 / PI);
+    ROS_INFO("Wrist Roll:  %f - %f\n", out[4], out[4] * 180 / PI);
 
     if (checkAngles(out))
 ;//        return true;
@@ -296,11 +308,11 @@ bool ik(float x, float y, float z, float R, float P, float out[5])
     out[3] = Wpalt;
 
     ROS_INFO("Alternate");
-    ROS_INFO("Base:\t%f", out[0]);
-    ROS_INFO("Shoulder:\t%f", out[1]);
-    ROS_INFO("Elbow:\t%f", out[2]);
-    ROS_INFO("Wrist Pitch:\t%f", out[3]);
-    ROS_INFO("Wrist Roll:\t%f", out[4]);
+    ROS_INFO("Base:        %f - %f",   out[0], out[0] * 180 / PI);
+    ROS_INFO("Shoulder:    %f - %f",   out[1], out[1] * 180 / PI);
+    ROS_INFO("Elbow:       %f - %f",   out[2], out[2] * 180 / PI);
+    ROS_INFO("Wrist Pitch: %f - %f",   out[3], out[3] * 180 / PI);
+    ROS_INFO("Wrist Roll:  %f - %f\n", out[4], out[4] * 180 / PI);
 
     if (checkAngles(out))
         return true;
@@ -308,7 +320,7 @@ bool ik(float x, float y, float z, float R, float P, float out[5])
     return false;
 }
 
-void callback(const sac_translators::target::ConstPtr& msg)
+void callback(const sac_msgs::target::ConstPtr& msg)
 {
     ROS_INFO_NAMED(NODE_NAME, "Hit");
 

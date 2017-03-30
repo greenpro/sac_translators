@@ -44,6 +44,7 @@
   <build_depend>roscpp</build_depend>
   <build_depend>rospy</build_depend>
   <build_depend>message_generation</build_depend>
+  <build_depend>sac_msgs</build_depend>
   <!--build_depend>moveit_core</build_depend>
   <build_depend>moveit_ros_planning_interface</build_depend>
   <build_depend>moveit_visual_tools</build_depend>
@@ -52,6 +53,7 @@
   <run_depend>roscpp</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>message_runtime</run_depend>
+  <run_depend>sac_msgs</run_depend>
   <!--run_depend>moveit_core</run_depend>
   <run_depend>moveit_fake_controller_manager</run_depend>
   <run_depend>moveit_ros_planning_interface</run_depend>
