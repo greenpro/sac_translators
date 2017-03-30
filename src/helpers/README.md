@@ -3,5 +3,5 @@
 This folder holds any necessary include files for the translators.
 
 ## Files
-config.h
+### config.h
 * This file holds all of the applicable global defines for the project.
