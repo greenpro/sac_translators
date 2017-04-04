@@ -89,7 +89,7 @@ bool ik(float x, float y, float z, float R, float P, float out[5])
     float d1 = 0.030;
     float d2 = 0.220;
     float d3 = 0.220;
-    float d4 = 0.160;
+    float d4 = 0.137; // to the center of the gripper
 
     ROS_INFO("x: %f, y: %f, z: %f, roll: %f, pitch: %f", x, y, z, R, P);
     float d4z = sin(P) * d4;
@@ -133,11 +133,11 @@ bool ik(float x, float y, float z, float R, float P, float out[5])
     ROS_INFO("A_bot: %f", A_bot);
     float A = acos(A_top / A_bot);
     ROS_INFO("A: %f", A);
-    float E_top = e_squared - d3_squared - d2_squared;
+    float E_top = x_squared + y_squared - d2_squared - d3_squared;//e_squared - d3_squared - d2_squared;
     ROS_INFO("E_top: %f", E_top);
-    float E_bot = -2 * d2 * d3;
+    float E_bot = 2 * d2 * d3;//-2 * d2 * d3;
     ROS_INFO("E_bot: %f", E_bot);
-    float E = PI - acos(E_top / E_bot);
+    float E = atan2(sqrt(1 - pow(E_top / E_bot, 2)), E_top / E_bot);//PI - acos(E_top / E_bot);
     ROS_INFO("E: %f", E);
     float Ez_top = ez_squared - e_squared - er_squared;
     ROS_INFO("Ez_top: %f", Ez_top);
@@ -155,7 +155,7 @@ bool ik(float x, float y, float z, float R, float P, float out[5])
     ROS_INFO("PI_div2: %f", PI_div2);
     float G = PI_div2 - Salt;
     ROS_INFO("G: %f", G);
-    float Wp =  P - (S + E);//z < d4z ? PI_div2 + G - P: PI_div2 - G + P;
+    float Wp =  P - (E - S);//z < d4z ? PI_div2 + G - P: PI_div2 - G + P;
     ROS_INFO("Wp: %f", Wp);
     float Wr = R;
     ROS_INFO("Wr: %f", Wr);
