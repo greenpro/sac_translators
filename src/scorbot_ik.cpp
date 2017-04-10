@@ -6,7 +6,7 @@
 #include <sac_msgs/MotorPos.h>
 
 #define NODE_NAME "IK"
-#define PI 3.14159265
+#define PI 3.1415926535898
 
 #define B_MIN (-2.7053)
 #define B_MAX (2.7053)
@@ -91,9 +91,8 @@ bool ik(float x, float y, float z, float R, float P, float out[5])
     float d3 = 0.220;
     float d4 = 0.137; // to the center of the gripper
 
-    ROS_INFO("x: %f, y: %f, z: %f, roll: %f, pitch: %f", x, y, z, R, P);
+    // Equations
     float d4z = sin(P) * d4;
-    ROS_INFO("d4z: %f", d4z);
 
     // check if the wrist joint or the back of the end effector is beneath the floor.
     // the 0.004 is to account for the radius of the joint.
@@ -104,67 +103,51 @@ bool ik(float x, float y, float z, float R, float P, float out[5])
     }
     
     float d4r = cos(P) * d4;
-    ROS_INFO("d4r: %f", d4r);
     float x_squared = pow(x, 2);
-    ROS_INFO("x^2: %f", x_squared);
     float y_squared = pow(y, 2);
-    ROS_INFO("y^2: %f", y_squared);
     float r = sqrt(x_squared + y_squared);
-    ROS_INFO("r: %f", r);
     float er = r - d1 - d4r;
-    ROS_INFO("er: %f", er);
-    float ez = z + d4z - d0;
-    ROS_INFO("ez: %f", ez);
-    float er_squared = pow(er, 2);
-    ROS_INFO("er^2: %f", er_squared);
-    float ez_squared = pow(ez, 2);
-    ROS_INFO("ez^2: %f", ez_squared);
-    float e_squared = er_squared + ez_squared;
-    ROS_INFO("e^2: %f", e_squared);
-    float e = sqrt(e_squared);
-    ROS_INFO("e: %f", e);
-    float d2_squared = pow(d2, 2);
-    ROS_INFO("d2^2: %f", d2_squared);
-    float d3_squared = pow(d3, 2);
-    ROS_INFO("d3^2: %f", d3_squared);
-    //float A_top = d3_squared - d2_squared - e_squared;
-    //ROS_INFO("A_top: %f", A_top);
-    //float A_bot = -2 * d2 * e;
-    //ROS_INFO("A_bot: %f", A_bot);
-    //float A = acos(A_top / A_bot);
-    //ROS_INFO("A: %f", A);
-    float E_top = er_squared + ez_squared - d2_squared - d3_squared;//e_squared - d3_squared - d2_squared;
-    ROS_INFO("E_top: %f", E_top);
-    float E_bot = 2 * d2 * d3;//-2 * d2 * d3;
-    ROS_INFO("E_bot: %f", E_bot);
-    float E = /**/atan2(sqrt(1 - pow(E_top / E_bot, 2)), E_top / E_bot);//*/PI - acos(E_top / E_bot);
-    ROS_INFO("E: %f", E);
-    float Ez_top = ez_squared - e_squared - er_squared;
-    ROS_INFO("Ez_top: %f", Ez_top);
-    float Ez_bot = -2 * e * er;
-    ROS_INFO("Ez_bot: %f", Ez_bot);
-    float Ez = acos(Ez_top / Ez_bot);
-    ROS_INFO("Ez: %f", Ez);
-    float S = PI / 2 + atan2(ez, er) - atan2(d3 * sin(E), d2 + d3 * cos(E));//z + d4z < z ? A + Ez : A - Ez;
-    ROS_INFO("S: %f", S);
-    float Salt = (E - S);
-    ROS_INFO("Salt: %f", Salt);
-    float B = atan2(y, x);
-    ROS_INFO("B: %f", B);
-    float PI_div2 = PI / 2;
-    ROS_INFO("PI_div2: %f", PI_div2);
-    float G = PI_div2 - Salt;
-    ROS_INFO("G: %f", G);
-    float Wp =  P - (E - S);//z < d4z ? PI_div2 + G - P: PI_div2 - G + P;
-    ROS_INFO("Wp: %f", Wp);
-    float Wr = R;
-    ROS_INFO("Wr: %f", Wr);
     
     if (er > d2 + d3)
     {
         ROS_INFO("The point is too far away.");
         return false;
     }
+    
+    float ez = z + d4z - d0;
+    float er_squared = pow(er, 2);
+    float ez_squared = pow(ez, 2);
+    float d2_squared = pow(d2, 2);
+    float d3_squared = pow(d3, 2);
+    float E_top = er_squared + ez_squared - d2_squared - d3_squared;
+    float E_bot = 2 * d2 * d3;
+    float E = atan2(sqrt(1 - pow(E_top / E_bot, 2)), E_top / E_bot);
+    float S = PI / 2 + atan2(ez, er) - atan2(d3 * sin(E), d2 + d3 * cos(E));
+    float B = atan2(y, x);
+    float Wp =  P - (E - S);
+    float Wr = R;
+
+    /*/
+    ROS_INFO("x: %f, y: %f, z: %f, roll: %f, pitch: %f", x, y, z, R, P);
+    ROS_INFO("d4z: %f", d4z);
+    ROS_INFO("d4r: %f", d4r);
+    ROS_INFO("x^2: %f", x_squared);
+    ROS_INFO("y^2: %f", y_squared);
+    ROS_INFO("r: %f", r);
+    ROS_INFO("er: %f", er);
+    ROS_INFO("ez: %f", ez);
+    ROS_INFO("er^2: %f", er_squared);
+    ROS_INFO("ez^2: %f", ez_squared);
+    ROS_INFO("d2^2: %f", d2_squared);
+    ROS_INFO("d3^2: %f", d3_squared);
+    ROS_INFO("E_top: %f", E_top);
+    ROS_INFO("E_bot: %f", E_bot);
+    ROS_INFO("E: %f", E);
+    ROS_INFO("S: %f", S);
+    ROS_INFO("B: %f", B);
+    ROS_INFO("Wp: %f", Wp);
+    ROS_INFO("Wr: %f", Wr);
+    /**/
 
     // assign the outputs
     out[0] = B;
@@ -183,7 +166,8 @@ bool ik(float x, float y, float z, float R, float P, float out[5])
         return true;
     ROS_INFO("Invalid joint angles");
 
-    float H = PI_div2 - S;
+    float H = PI / 2 - S;
+    float Salt = (E - S);
     float Ealt = -E;
     float Wpalt = (H + P) - PI;
 
