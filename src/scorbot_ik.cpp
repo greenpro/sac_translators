@@ -156,6 +156,26 @@ bool ik(float x, float y, float z, float R, float P, float out[5])
     out[3] = Wp;
     out[4] = Wr;
 
+    ROS_INFO("");
+    ROS_INFO("Inputs");
+    ROS_INFO("--------------------");
+    ROS_INFO("X:           %f",   x);
+    ROS_INFO("Y:           %f",   y);
+    ROS_INFO("Z:           %f",   z);
+    ROS_INFO("roll:        %f",   R);
+    ROS_INFO("pitch:       %f\n", P);
+    
+    ROS_INFO("Knowns");
+    ROS_INFO("--------------------");
+    ROS_INFO("base x:      %f", d1);
+    ROS_INFO("base z:      %f", d0);
+    ROS_INFO("shoulder x:  %f", d2);
+    ROS_INFO("elbow x:     %f", d3);
+    ROS_INFO("hand x:      %f", d4);
+
+    
+    ROS_INFO("Outputs");
+    ROS_INFO("--------------------");
     ROS_INFO("Base:        %f - %f",   out[0], out[0] * 180 / PI);
     ROS_INFO("Shoulder:    %f - %f",   out[1], out[1] * 180 / PI);
     ROS_INFO("Elbow:       %f - %f",   out[2], out[2] * 180 / PI);
