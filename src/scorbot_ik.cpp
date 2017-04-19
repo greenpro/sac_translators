@@ -5,67 +5,71 @@
 #include <sac_msgs/Target.h>
 #include <sac_msgs/MotorPos.h>
 
-#define NODE_NAME "IK"
-#define PI 3.1415926535898
+namespace ik 
+{
+    // constants
+    const char *nodeName = "IK";
+    const char *subscribe = "moveto";
+    const float pi = 3.1415926535898;
+    const float bMin = -2.7053;
+    const float bMax = 2.7053;
+    const float sMin = -0.6109;
+    const float sMax = 2.2689;
+    const float eMin = -2.2689;
+    const float eMax = 2.2689;
+    const float pMin = -2.2689;
+    const float pMax = 2.2689;
 
-#define B_MIN (-2.7053)
-#define B_MAX (2.7053)
-#define S_MIN (-0.6109)
-#define S_MAX (2.2689)
-#define E_MIN (-2.2689)
-#define E_MAX (2.2689)
-#define WP_MIN (-2.2689)
-#define WP_MAX (2.2689)
-
-ros::Publisher       basePub;
-ros::Publisher   shoulderPub;
-ros::Publisher      elbowPub;
-ros::Publisher  wristRollPub;
-ros::Publisher wristPitchPub;
+    ros::Publisher       basePub;
+    ros::Publisher   shoulderPub;
+    ros::Publisher      elbowPub;
+    ros::Publisher  wristRollPub;
+    ros::Publisher wristPitchPub;
+}
 
 bool checkAngles(float angles[5])
 {
-    if (angles[0] < B_MIN)
+    if (angles[0] < ik::bMin)
     {
-        ROS_INFO("Base angle (%f) is less than the minimum angle (%f)",  angles[0], B_MIN);
+        ROS_INFO("Base angle (%f) is less than the minimum angle (%f)",  angles[0], ik::bMin);
         return false;
     }
-    if (angles[0] > B_MAX)
+    if (angles[0] > ik::bMax)
     {
-        ROS_INFO("Base angle (%f) is greater than the maximum angle (%f)",  angles[0], B_MAX);
-        return false;
-    }
-
-    if (angles[1] < S_MIN)
-    {
-        ROS_INFO("Shoulder angle (%f) is less than the minimum angle (%f)",  angles[1], S_MIN);
-        return false;
-    }
-    if (angles[1] > S_MAX)
-    {
-        ROS_INFO("Shoulder angle (%f) is greater than the maximum angle (%f)",  angles[1], S_MAX);
+        ROS_INFO("Base angle (%f) is greater than the maximum angle (%f)",  angles[0], ik::bMax);
         return false;
     }
 
-    if (angles[2] < E_MIN)
+    if (angles[1] < ik::sMin)
     {
-        ROS_INFO("Elbow angle (%f) is less than the minimum angle (%f)",  angles[2], E_MIN);
+        ROS_INFO("Shoulder angle (%f) is less than the minimum angle (%f)",  angles[1], ik::sMin);
         return false;
     }
-    if (angles[2] > E_MAX)
+    if (angles[1] > ik::sMax)
     {
-        ROS_INFO("Elbow angle (%f) is greater than the maximum angle (%f)",  angles[2], E_MAX);
+        ROS_INFO("Shoulder angle (%f) is greater than the maximum angle (%f)",  angles[1], ik::sMax);
+        return false;
+    }
+
+    if (angles[2] < ik::eMin)
+    {
+        ROS_INFO("Elbow angle (%f) is less than the minimum angle (%f)",  angles[2], ik::eMin);
+        return false;
+    }
+    if (angles[2] > ik::eMax)
+    {
+        ROS_INFO("Elbow angle (%f) is greater than the maximum angle (%f)",  angles[2], ik::eMax);
         return false;
     }
     
-    if (angles[3] < WP_MIN)
+    if (angles[3] < ik::pMin)
     {
-        ROS_INFO("Wrist pitch angle (%f) is less than the minimum angle (%f)",  angles[3], WP_MIN);
+        ROS_INFO("Wrist pitch angle (%f) is less than the minimum angle (%f)",  angles[3], ik::pMin);
         return false;
     }
-    if (angles[3] > WP_MAX)
+    if (angles[3] > ik::pMax)
     {
-        ROS_INFO("Wrist pitch angle (%f) is greater than the maximum angle (%f)",  angles[3], WP_MAX);
+        ROS_INFO("Wrist pitch angle (%f) is greater than the maximum angle (%f)",  angles[3], ik::pMax);
         return false;
     }
 
@@ -75,7 +79,7 @@ bool checkAngles(float angles[5])
 // NOTE :: All angles are in radians.
 // NOTE :: All distances in this function are in meters to follow the ros standard.
 // NOTE :: For this function angles contain capitolized letters distances are lower case and modifications to the variable are after the "_".
-bool ik(float x, float y, float z, float R, float P, float out[5])
+bool ikSolve(float x, float y, float z, float R, float P, float out[5])
 {
     // check if the end effector is beneath the floor.
     if (z < 0)
@@ -122,7 +126,7 @@ bool ik(float x, float y, float z, float R, float P, float out[5])
     float E_top = er_squared + ez_squared - d2_squared - d3_squared;
     float E_bot = 2 * d2 * d3;
     float E = atan2(sqrt(1 - pow(E_top / E_bot, 2)), E_top / E_bot);
-    float S = PI / 2 + atan2(ez, er) - atan2(d3 * sin(E), d2 + d3 * cos(E));
+    float S = ik::pi / 2 + atan2(ez, er) - atan2(d3 * sin(E), d2 + d3 * cos(E));
     float B = atan2(y, x);
     float Wp =  P - (E - S);
     float Wr = R;
@@ -176,31 +180,31 @@ bool ik(float x, float y, float z, float R, float P, float out[5])
     
     ROS_INFO("Outputs");
     ROS_INFO("--------------------");
-    ROS_INFO("Base:        %f - %f",   out[0], out[0] * 180 / PI);
-    ROS_INFO("Shoulder:    %f - %f",   out[1], out[1] * 180 / PI);
-    ROS_INFO("Elbow:       %f - %f",   out[2], out[2] * 180 / PI);
-    ROS_INFO("Wrist Pitch: %f - %f",   out[3], out[3] * 180 / PI);
-    ROS_INFO("Wrist Roll:  %f - %f\n", out[4], out[4] * 180 / PI);
+    ROS_INFO("Base:        %f - %f",   out[0], out[0] * 180 / ik::pi);
+    ROS_INFO("Shoulder:    %f - %f",   out[1], out[1] * 180 / ik::pi);
+    ROS_INFO("Elbow:       %f - %f",   out[2], out[2] * 180 / ik::pi);
+    ROS_INFO("Wrist Pitch: %f - %f",   out[3], out[3] * 180 / ik::pi);
+    ROS_INFO("Wrist Roll:  %f - %f\n", out[4], out[4] * 180 / ik::pi);
 
     if (checkAngles(out))
         return true;
     ROS_INFO("Invalid joint angles");
 
-    float H = PI / 2 - S;
+    float H = ik::pi / 2 - S;
     float Salt = (E - S);
     float Ealt = -E;
-    float Wpalt = (H + P) - PI;
+    float Wpalt = (H + P) - ik::pi;
 
     out[1] = Salt;
     out[2] = Ealt;
     out[3] = Wpalt;
 
     ROS_INFO("Alternate");
-    ROS_INFO("Base:        %f - %f",   out[0], out[0] * 180 / PI);
-    ROS_INFO("Shoulder:    %f - %f",   out[1], out[1] * 180 / PI);
-    ROS_INFO("Elbow:       %f - %f",   out[2], out[2] * 180 / PI);
-    ROS_INFO("Wrist Pitch: %f - %f",   out[3], out[3] * 180 / PI);
-    ROS_INFO("Wrist Roll:  %f - %f\n", out[4], out[4] * 180 / PI);
+    ROS_INFO("Base:        %f - %f",   out[0], out[0] * 180 / ik::pi);
+    ROS_INFO("Shoulder:    %f - %f",   out[1], out[1] * 180 / ik::pi);
+    ROS_INFO("Elbow:       %f - %f",   out[2], out[2] * 180 / ik::pi);
+    ROS_INFO("Wrist Pitch: %f - %f",   out[3], out[3] * 180 / ik::pi);
+    ROS_INFO("Wrist Roll:  %f - %f\n", out[4], out[4] * 180 / ik::pi);
 
     if (checkAngles(out))
         return true;
@@ -219,41 +223,40 @@ void callback(const sac_msgs::Target::ConstPtr& msg)
 
     float out[5];
     
-    if (!ik(x, y, z, roll, pitch, out))
+    if (!ikSolve(x, y, z, roll, pitch, out))
         return;
 
     sac_msgs::MotorPos pos;
     pos.speed = msg->speed;
     
     pos.pos = out[0];
-    basePub.publish(pos);
+    ik::basePub.publish(pos);
 
     pos.pos = out[1];
-    shoulderPub.publish(pos);
+    ik::shoulderPub.publish(pos);
     
     pos.pos = out[2];
-    elbowPub.publish(pos);
+    ik::elbowPub.publish(pos);
 
     pos.pos = out[3];
-    wristPitchPub.publish(pos);
+    ik::wristPitchPub.publish(pos);
     
     pos.pos = out[4];
-    wristRollPub.publish(pos);
+    ik::wristRollPub.publish(pos);
 }
 
 int main(int argc, char **argv)
 {
-    ROS_INFO_NAMED(NODE_NAME, "starting");
-    ros::init(argc, argv, NODE_NAME);
+    ros::init(argc, argv, ik::nodeName);
     
     ros::NodeHandle nh;
-    ros::Subscriber sub = nh.subscribe("moveto", 1000, callback);
+    ros::Subscriber sub = nh.subscribe(ik::subscribe, 1000, callback);
 
-    basePub       = nh.advertise<sac_msgs::MotorPos>(      "baseMotor", 1000);
-    shoulderPub   = nh.advertise<sac_msgs::MotorPos>(  "shoulderMotor", 1000);
-    elbowPub      = nh.advertise<sac_msgs::MotorPos>(     "elbowMotor", 1000);
-    wristPitchPub = nh.advertise<sac_msgs::MotorPos>("wristPitchMotor", 1000);
-    wristRollPub  = nh.advertise<sac_msgs::MotorPos>( "wristRollMotor", 1000);
+    ik::basePub       = nh.advertise<sac_msgs::MotorPos>(    "baseMotor", 1000);
+    ik::shoulderPub   = nh.advertise<sac_msgs::MotorPos>("shoulderMotor", 1000);
+    ik::elbowPub      = nh.advertise<sac_msgs::MotorPos>(   "elbowMotor", 1000);
+    ik::wristPitchPub = nh.advertise<sac_msgs::MotorPos>(   "pitchMotor", 1000);
+    ik::wristRollPub  = nh.advertise<sac_msgs::MotorPos>(    "rollMotor", 1000);
 
     ros::spin();
 
