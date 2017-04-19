@@ -226,6 +226,7 @@ void callback(const sac_msgs::Target::ConstPtr& msg)
     if (!ikSolve(x, y, z, roll, pitch, out))
         return;
 
+    ROS_INFO("--------------publishing");
     sac_msgs::MotorPos pos;
     pos.speed = msg->speed;
     
@@ -252,11 +253,11 @@ int main(int argc, char **argv)
     ros::NodeHandle nh;
     ros::Subscriber sub = nh.subscribe(ik::subscribe, 1000, callback);
 
-    ik::basePub       = nh.advertise<sac_msgs::MotorPos>(    "baseMotor", 1000);
-    ik::shoulderPub   = nh.advertise<sac_msgs::MotorPos>("shoulderMotor", 1000);
-    ik::elbowPub      = nh.advertise<sac_msgs::MotorPos>(   "elbowMotor", 1000);
-    ik::wristPitchPub = nh.advertise<sac_msgs::MotorPos>(   "pitchMotor", 1000);
-    ik::wristRollPub  = nh.advertise<sac_msgs::MotorPos>(    "rollMotor", 1000);
+    ik::basePub       = nh.advertise<sac_msgs::MotorPos>(    "/baseMotor", 1000);
+    ik::shoulderPub   = nh.advertise<sac_msgs::MotorPos>("/shoulderMotor", 1000);
+    ik::elbowPub      = nh.advertise<sac_msgs::MotorPos>(   "/elbowMotor", 1000);
+    ik::wristPitchPub = nh.advertise<sac_msgs::MotorPos>(   "/pitchMotor", 1000);
+    ik::wristRollPub  = nh.advertise<sac_msgs::MotorPos>(    "/rollMotor", 1000);
 
     ros::spin();
 
