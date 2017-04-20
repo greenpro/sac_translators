@@ -9,7 +9,8 @@ This folder holds all of the source files for the translators.
 * The pitch is the angle the end-effector approaches the target at in relation to the horizontal plane.
 * The roll is the angle the end-effector approaches the target at in relation to the horizontal ground plane.
 * Pictures to explain and illustrate all of this is contained in this folder.
-* All angle coming in and out of this node should be in radians.
+* All angles coming in and out of this node should be in radians.
+* Some of the equations are modified from the paper "Kinematics for Lynxmotion Robot Arm" by Dr. Rainer Hessmer published October 2009
 
 ## Folders
 ### helpers/

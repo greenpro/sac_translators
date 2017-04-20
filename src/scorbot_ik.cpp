@@ -11,14 +11,22 @@ namespace ik
     const char *nodeName = "IK";
     const char *subscribe = "moveto";
     const float pi = 3.1415926535898;
-    const float bMin = -2.7053;
-    const float bMax = 2.7053;
-    const float sMin = -0.6109;
-    const float sMax = 2.2689;
-    const float eMin = -2.2689;
-    const float eMax = 2.2689;
-    const float pMin = -2.2689;
-    const float pMax = 2.2689;
+
+    // arm constants
+    const float baselbowMin = -2.7053;
+    const float baselbowMax = 2.7053;
+    const float shoulderMin = -0.6109;
+    const float shoulderMax = 2.2689;
+    const float elbowMin = -2.2689;
+    const float elbowMax = 2.2689;
+    const float pitchMin = -2.2689;
+    const float pitchMax = 2.2689;
+
+    const float d0 = 0.360;
+    const float d1 = 0.030;
+    const float d2 = 0.220;
+    const float d3 = 0.220;
+    const float d4 = 0.095; //0.137; // to the end of the roll link
 
     ros::Publisher       basePub;
     ros::Publisher   shoulderPub;
@@ -29,47 +37,47 @@ namespace ik
 
 bool checkAngles(float angles[5])
 {
-    if (angles[0] < ik::bMin)
+    if (angles[0] < ik::baselbowMin)
     {
-        ROS_INFO("Base angle (%f) is less than the minimum angle (%f)",  angles[0], ik::bMin);
+        ROS_INFO("Base angle (%f) is less than the minimum angle (%f)",  angles[0], ik::baselbowMin);
         return false;
     }
-    if (angles[0] > ik::bMax)
+    if (angles[0] > ik::baselbowMax)
     {
-        ROS_INFO("Base angle (%f) is greater than the maximum angle (%f)",  angles[0], ik::bMax);
-        return false;
-    }
-
-    if (angles[1] < ik::sMin)
-    {
-        ROS_INFO("Shoulder angle (%f) is less than the minimum angle (%f)",  angles[1], ik::sMin);
-        return false;
-    }
-    if (angles[1] > ik::sMax)
-    {
-        ROS_INFO("Shoulder angle (%f) is greater than the maximum angle (%f)",  angles[1], ik::sMax);
+        ROS_INFO("Base angle (%f) is greater than the maximum angle (%f)",  angles[0], ik::baselbowMax);
         return false;
     }
 
-    if (angles[2] < ik::eMin)
+    if (angles[1] < ik::shoulderMin)
     {
-        ROS_INFO("Elbow angle (%f) is less than the minimum angle (%f)",  angles[2], ik::eMin);
+        ROS_INFO("Shoulder angle (%f) is less than the minimum angle (%f)",  angles[1], ik::shoulderMin);
         return false;
     }
-    if (angles[2] > ik::eMax)
+    if (angles[1] > ik::shoulderMax)
     {
-        ROS_INFO("Elbow angle (%f) is greater than the maximum angle (%f)",  angles[2], ik::eMax);
+        ROS_INFO("Shoulder angle (%f) is greater than the maximum angle (%f)",  angles[1], ik::shoulderMax);
+        return false;
+    }
+
+    if (angles[2] < ik::elbowMin)
+    {
+        ROS_INFO("Elbow angle (%f) is less than the minimum angle (%f)",  angles[2], ik::elbowMin);
+        return false;
+    }
+    if (angles[2] > ik::elbowMax)
+    {
+        ROS_INFO("Elbow angle (%f) is greater than the maximum angle (%f)",  angles[2], ik::elbowMax);
         return false;
     }
     
-    if (angles[3] < ik::pMin)
+    if (angles[3] < ik::pitchMin)
     {
-        ROS_INFO("Wrist pitch angle (%f) is less than the minimum angle (%f)",  angles[3], ik::pMin);
+        ROS_INFO("Wrist pitch angle (%f) is less than the minimum angle (%f)",  angles[3], ik::pitchMin);
         return false;
     }
-    if (angles[3] > ik::pMax)
+    if (angles[3] > ik::pitchMax)
     {
-        ROS_INFO("Wrist pitch angle (%f) is greater than the maximum angle (%f)",  angles[3], ik::pMax);
+        ROS_INFO("Wrist pitch angle (%f) is greater than the maximum angle (%f)",  angles[3], ik::pitchMax);
         return false;
     }
 
@@ -88,15 +96,8 @@ bool ikSolve(float x, float y, float z, float R, float P, float out[5])
         return false;
     }
 
-    // knowns
-    float d0 = 0.350;
-    float d1 = 0.030;
-    float d2 = 0.220;
-    float d3 = 0.220;
-    float d4 = 0.137; // to the center of the gripper
-
     // Equations
-    float d4z = sin(P) * d4;
+    float d4z = sin(P) * ik::d4;
 
     // check if the wrist joint or the back of the end effector is beneath the floor.
     // the 0.004 is to account for the radius of the joint.
@@ -106,52 +107,43 @@ bool ikSolve(float x, float y, float z, float R, float P, float out[5])
         return false;
     }
     
-    float d4r = cos(P) * d4;
+    float d4r = cos(P) * ik::d4;
     float x_squared = pow(x, 2);
     float y_squared = pow(y, 2);
     float r = sqrt(x_squared + y_squared);
-    float er = r - d1 - d4r;
+    float er = r - ik::d1 - d4r;
     
-    if (er > d2 + d3)
+    if (er > ik::d2 + ik::d3)
     {
         ROS_INFO("The point is too far away.");
         return false;
     }
     
-    float ez = z + d4z - d0;
+    float ez = z + d4z - ik::d0;
     float er_squared = pow(er, 2);
     float ez_squared = pow(ez, 2);
-    float d2_squared = pow(d2, 2);
-    float d3_squared = pow(d3, 2);
+    float d2_squared = pow(ik::d2, 2);
+    float d3_squared = pow(ik::d3, 2);
     float E_top = er_squared + ez_squared - d2_squared - d3_squared;
-    float E_bot = 2 * d2 * d3;
+    float E_bot = 2 * ik::d2 * ik::d3;
     float E = atan2(sqrt(1 - pow(E_top / E_bot, 2)), E_top / E_bot);
-    float S = ik::pi / 2 + atan2(ez, er) - atan2(d3 * sin(E), d2 + d3 * cos(E));
+    float k1 = ik::d2 + ik::d3 * cos(E);
+    float k2 = ik::d3 * sin(E);
+    //
+    float e_squared = er_squared + ez_squared;
+    float e = sqrt(e_squared);
+    float Ez_top = ez_squared - e_squared - er_squared;
+    float Ez_bot = -2 * e * er;
+    float Ez = acos(Ez_top / Ez_bot);
+    float A_top = d3_squared - d2_squared - e_squared;
+    float A_bot = -2 * ik::d2 * e;
+    float A = acos(A_top / A_bot); 
+    float S = A - Ez;
+    //float S = ik::pi / 2 + atan2(ez, er) - atan2(k2, k1);
+    //
     float B = atan2(y, x);
     float Wp =  P - (E - S);
     float Wr = R;
-
-    /*/
-    ROS_INFO("x: %f, y: %f, z: %f, roll: %f, pitch: %f", x, y, z, R, P);
-    ROS_INFO("d4z: %f", d4z);
-    ROS_INFO("d4r: %f", d4r);
-    ROS_INFO("x^2: %f", x_squared);
-    ROS_INFO("y^2: %f", y_squared);
-    ROS_INFO("r: %f", r);
-    ROS_INFO("er: %f", er);
-    ROS_INFO("ez: %f", ez);
-    ROS_INFO("er^2: %f", er_squared);
-    ROS_INFO("ez^2: %f", ez_squared);
-    ROS_INFO("d2^2: %f", d2_squared);
-    ROS_INFO("d3^2: %f", d3_squared);
-    ROS_INFO("E_top: %f", E_top);
-    ROS_INFO("E_bot: %f", E_bot);
-    ROS_INFO("E: %f", E);
-    ROS_INFO("S: %f", S);
-    ROS_INFO("B: %f", B);
-    ROS_INFO("Wp: %f", Wp);
-    ROS_INFO("Wr: %f", Wr);
-    /**/
 
     // assign the outputs
     out[0] = B;
@@ -171,12 +163,34 @@ bool ikSolve(float x, float y, float z, float R, float P, float out[5])
     
     ROS_INFO("Knowns");
     ROS_INFO("--------------------");
-    ROS_INFO("base x:      %f", d1);
-    ROS_INFO("base z:      %f", d0);
-    ROS_INFO("shoulder x:  %f", d2);
-    ROS_INFO("elbow x:     %f", d3);
-    ROS_INFO("hand x:      %f", d4);
+    ROS_INFO("base x:      %f", ik::d1);
+    ROS_INFO("base z:      %f", ik::d0);
+    ROS_INFO("shoulder x:  %f", ik::d2);
+    ROS_INFO("elbow x:     %f", ik::d3);
+    ROS_INFO("hand x:      %f\n", ik::d4);
 
+    ROS_INFO("Equations");
+    ROS_INFO("--------------------");
+    ROS_INFO("d4z: %f", d4z);
+    ROS_INFO("d4r: %f", d4r);
+    ROS_INFO("x^2: %f", x_squared);
+    ROS_INFO("y^2: %f", y_squared);
+    ROS_INFO("r: %f", r);
+    ROS_INFO("er: %f", er);
+    ROS_INFO("ez: %f", ez);
+    ROS_INFO("er^2: %f", er_squared);
+    ROS_INFO("ez^2: %f", ez_squared);
+    ROS_INFO("d2^2: %f", d2_squared);
+    ROS_INFO("d3^2: %f", d3_squared);
+    ROS_INFO("E_top: %f", E_top);
+    ROS_INFO("E_bot: %f", E_bot);
+    ROS_INFO("E: %f", E);
+    ROS_INFO("S: %f", S);
+    ROS_INFO("B: %f", B);
+    ROS_INFO("Wp: %f", Wp);
+    ROS_INFO("Wr: %f", Wr);
+    ROS_INFO("A: %f", A);
+    ROS_INFO("Ez: %f", Ez);
     
     ROS_INFO("Outputs");
     ROS_INFO("--------------------");
