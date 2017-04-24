@@ -1,7 +1,4 @@
 #include <ros/ros.h>
-#include <pluginlib/class_loader.h>
-#include <std_msgs/Float64.h>
-#include <geometry_msgs/Twist.h>
 #include <sac_msgs/Target.h>
 #include <sac_msgs/MotorPos.h>
 
@@ -87,7 +84,7 @@ bool checkAngles(float angles[5])
 // NOTE :: All angles are in radians.
 // NOTE :: All distances in this function are in meters to follow the ros standard.
 // NOTE :: For this function angles contain capitolized letters distances are lower case and modifications to the variable are after the "_".
-bool ikSolve(float x, float y, float z, float R, float P, float out[5])
+bool ikSolve(float x, float y, float z, float ROLL, float PITCH, float out[5])
 {
     // check if the end effector is beneath the floor.
     if (z < 0)
@@ -97,7 +94,7 @@ bool ikSolve(float x, float y, float z, float R, float P, float out[5])
     }
 
     // Equations
-    float d4z = sin(P) * ik::d4;
+    float d4z = sin(PITCH) * ik::d4;
 
     // check if the wrist joint or the back of the end effector is beneath the floor.
     // the 0.004 is to account for the radius of the joint.
@@ -107,7 +104,7 @@ bool ikSolve(float x, float y, float z, float R, float P, float out[5])
         return false;
     }
     
-    float d4r = cos(P) * ik::d4;
+    float d4r = cos(PITCH) * ik::d4;
     float x_squared = pow(x, 2);
     float y_squared = pow(y, 2);
     float r = sqrt(x_squared + y_squared);
@@ -127,9 +124,6 @@ bool ikSolve(float x, float y, float z, float R, float P, float out[5])
     float E_top = er_squared + ez_squared - d2_squared - d3_squared;
     float E_bot = 2 * ik::d2 * ik::d3;
     float E = atan2(sqrt(1 - pow(E_top / E_bot, 2)), E_top / E_bot);
-    float k1 = ik::d2 + ik::d3 * cos(E);
-    float k2 = ik::d3 * sin(E);
-    //
     float e_squared = er_squared + ez_squared;
     float e = sqrt(e_squared);
     float Ez_top = ez_squared - e_squared - er_squared;
@@ -139,18 +133,16 @@ bool ikSolve(float x, float y, float z, float R, float P, float out[5])
     float A_bot = -2 * ik::d2 * e;
     float A = acos(A_top / A_bot); 
     float S = A - Ez;
-    //float S = ik::pi / 2 + atan2(ez, er) - atan2(k2, k1);
-    //
+    float P =  PITCH - (E - S);
     float B = atan2(y, x);
-    float Wp =  P - (E - S);
-    float Wr = R;
+    float R = ROLL;
 
     // assign the outputs
     out[0] = B;
     out[1] = S;
     out[2] = E;
-    out[3] = Wp;
-    out[4] = Wr;
+    out[3] = P;
+    out[4] = R;
 
     ROS_INFO("");
     ROS_INFO("Inputs");
@@ -158,8 +150,8 @@ bool ikSolve(float x, float y, float z, float R, float P, float out[5])
     ROS_INFO("X:           %f",   x);
     ROS_INFO("Y:           %f",   y);
     ROS_INFO("Z:           %f",   z);
-    ROS_INFO("roll:        %f",   R);
-    ROS_INFO("pitch:       %f\n", P);
+    ROS_INFO("roll:        %f",   ROLL);
+    ROS_INFO("pitch:       %f\n", PITCH);
     
     ROS_INFO("Knowns");
     ROS_INFO("--------------------");
@@ -187,8 +179,8 @@ bool ikSolve(float x, float y, float z, float R, float P, float out[5])
     ROS_INFO("E: %f", E);
     ROS_INFO("S: %f", S);
     ROS_INFO("B: %f", B);
-    ROS_INFO("Wp: %f", Wp);
-    ROS_INFO("Wr: %f", Wr);
+    ROS_INFO("P: %f", P);
+    ROS_INFO("R: %f", R);
     ROS_INFO("A: %f", A);
     ROS_INFO("Ez: %f", Ez);
     
@@ -207,11 +199,11 @@ bool ikSolve(float x, float y, float z, float R, float P, float out[5])
     float H = ik::pi / 2 - S;
     float Salt = (E - S);
     float Ealt = -E;
-    float Wpalt = (H + P) - ik::pi;
+    float Palt = (H + PITCH) - ik::pi;
 
     out[1] = Salt;
     out[2] = Ealt;
-    out[3] = Wpalt;
+    out[3] = Palt;
 
     ROS_INFO("Alternate");
     ROS_INFO("Base:        %f - %f",   out[0], out[0] * 180 / ik::pi);
