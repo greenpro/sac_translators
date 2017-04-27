@@ -23,7 +23,7 @@ namespace ik
     const float d1 = 0.030;
     const float d2 = 0.220;
     const float d3 = 0.220;
-    const float d4 = 0.095; //0.137; // to the end of the roll link
+    const float d4 = 0.140; // to the end of the gripper
 
     ros::Publisher       basePub;
     ros::Publisher   shoulderPub;
